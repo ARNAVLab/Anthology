@@ -1,11 +1,9 @@
-﻿using System.Text.Json;
-
-namespace Anthology.Models
+﻿namespace Anthology.Models
 {
-    /// <summary>
-    /// Manages execution and lifetime of the simulation.
-    /// </summary>
-    public static class ExecutionManager
+	/// <summary>
+	/// Manages execution and lifetime of the simulation.
+	/// </summary>
+	public static class ExecutionManager
     {
         /// <summary>
         /// Initializes the simulation by initializing the world.
