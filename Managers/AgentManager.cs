@@ -1,4 +1,8 @@
-﻿namespace Anthology.Models
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace Anthology.Models
 {
     /// <summary>
     /// Manages agents and their motives.
@@ -56,8 +60,10 @@
             {
                 return a.Name == name;
             }
-            Agent? agent = Agents.Find(MatchName);
-            return agent ?? throw new ArgumentException("Agent with name: " + name + " does not exist.");
+            Agent agent = Agents.Find(MatchName);
+			return agent ?? throw new ArgumentException("Agent with name: " + name + " does not exist.");
+			
+            
         }
 
         /// <summary>
@@ -66,7 +72,7 @@
         /// <param name="agent">The agent to check.</param>
         /// <param name="reqs">The requirements to check.</param>
         /// <returns>True if agent satisfies all requirements for an action.</returns>
-        public static bool AgentSatisfiesMotiveRequirement(Agent agent, IEnumerable<RMotive> reqs)
+        public static bool AgentSatisfiesMotiveRequirement(Agent agent, List<RMotive> reqs)
         {
             foreach (RMotive r in reqs)
             {

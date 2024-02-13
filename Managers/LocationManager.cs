@@ -1,4 +1,8 @@
-﻿using System.Numerics;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Numerics;
+using System.Threading.Tasks;
 
 namespace Anthology.Models
 {
@@ -139,10 +143,10 @@ namespace Anthology.Models
         /// </summary>
         /// <param name="requirements">Requirements that locations must satisfy in order to be returned.</param>
         /// <returns>Returns all the locations that satisfied the given requirement, or an empty enumerable if none match.</returns>
-        public static IEnumerable<LocationNode> LocationsSatisfyingLocationRequirement(RLocation requirements)
+        public static List<LocationNode> LocationsSatisfyingLocationRequirement(RLocation requirements)
         {
             List<LocationNode> matches = new();
-            if (requirements.HasOneOrMoreOf.Count > 0)
+            if (requirements.HasOneOrMoreOf.Count() > 0)
             {
                 foreach (string tag in requirements.HasOneOrMoreOf)
                 {
@@ -153,14 +157,14 @@ namespace Anthology.Models
             {
                 matches.AddRange(LocationsByName.Values);
             }
-            if (requirements.HasAllOf.Count > 0)
+            if (requirements.HasAllOf.Count() > 0)
             {
                 foreach (string tag in requirements.HasAllOf)
                 {
                     matches = matches.Intersect(LocationsByTag[tag]).ToList();
                 }
             }
-            if (requirements.HasNoneOf.Count > 0)
+            if (requirements.HasNoneOf.Count() > 0)
             {
                 foreach (string tag in requirements.HasNoneOf)
                 {
@@ -179,7 +183,7 @@ namespace Anthology.Models
         /// <param name="requirements">Requirements that locations must satisfy to be returned.</param>
         /// <param name="agent">Agent relevant for handling agent requirement(s).</param>
         /// <returns>Returns all the locations that satisfied the given requirement, or an empty enumerable if none match.</returns>
-        public static IEnumerable<LocationNode> LocationsSatisfyingPeopleRequirement(IEnumerable<LocationNode> locations, RPeople requirements, string agent = "")
+        public static List<LocationNode> LocationsSatisfyingPeopleRequirement(IEnumerable<LocationNode> locations, RPeople requirements, string agent = "")
         {
             bool IsLocationValid(LocationNode location)
             {

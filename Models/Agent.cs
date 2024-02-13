@@ -1,4 +1,7 @@
-﻿namespace Anthology.Models
+﻿using System;
+using System.Collections.Generic;
+
+namespace Anthology.Models
 {
     /// <summary>
     /// Relationships are composed by agents, so the owning agent will always be the source of the relationship,
@@ -86,7 +89,8 @@
             Destination = destination.Name;
             LocationNode currentLoc = LocationManager.LocationsByName[CurrentLocation];
             OccupiedCounter = (int)Math.Ceiling(LocationManager.DistanceMatrix[currentLoc.ID * LocationManager.LocationCount + destination.ID]);
-            Console.WriteLine("time: " + time.ToString() + " | " + Name + ": Started " + CurrentAction.First().Name + "; Destination: " + destination.Name);
+			Action _currentAction = CurrentAction.First.Value;
+            Console.WriteLine("time: " + time.ToString() + " | " + Name + ": Started " + _currentAction.Name + "; Destination: " + destination.Name);
         }
 
         /// <summary>
@@ -117,7 +121,7 @@
 
             if (CurrentAction.Count > 0)
             {
-                Action action = CurrentAction.First();
+                Action action = CurrentAction.First.Value;
                 CurrentAction.RemoveFirst();
 
                 if (action is PrimaryAction pAction)
@@ -160,7 +164,7 @@
         /// </summary>
         public void StartAction()
         {
-            Action action = CurrentAction.First();
+            Action action = CurrentAction.First.Value;
             OccupiedCounter = action.MinTime;
             
             if (action is ScheduleAction)
@@ -193,9 +197,9 @@
 
                 float travelTime;
                 List<LocationNode> possibleLocations = new();
-                List<RMotive>? rMotives = action.Requirements.Motives;
-                List<RLocation>? rLocations = action.Requirements.Locations;
-                List<RPeople>? rPeople = action.Requirements.People;
+                List<RMotive> rMotives = action.Requirements.Motives;
+                List<RLocation> rLocations = action.Requirements.Locations;
+                List<RPeople> rPeople = action.Requirements.People;
 
                 if (rMotives != null)
                 {
@@ -206,7 +210,7 @@
                 }
                 if (rLocations != null)
                 {
-                    possibleLocations = LocationManager.LocationsSatisfyingLocationRequirement(rLocations[0]).ToList();
+                    possibleLocations = LocationManager.LocationsSatisfyingLocationRequirement(rLocations[0]);
                 }
                 else
                 {
@@ -214,7 +218,7 @@
                 }
                 if (rPeople != null && possibleLocations.Count > 0)
                 {
-                    possibleLocations = LocationManager.LocationsSatisfyingPeopleRequirement(possibleLocations, rPeople[0]).ToList();
+                    possibleLocations = LocationManager.LocationsSatisfyingPeopleRequirement(possibleLocations, rPeople[0]);
                 }
 
                 if (possibleLocations.Count > 0)
@@ -351,7 +355,7 @@
 
             if (agent.CurrentAction.Count > 0)
             {
-                serializableAgent.CurrentAction = agent.CurrentAction.First().Name;
+                serializableAgent.CurrentAction = agent.CurrentAction.First.Value.Name;
             }
             else
             {

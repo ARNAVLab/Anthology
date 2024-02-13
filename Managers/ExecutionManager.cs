@@ -1,4 +1,7 @@
-﻿namespace Anthology.Models
+﻿using System;
+using System.Threading.Tasks;
+
+namespace Anthology.Models
 {
 	/// <summary>
 	/// Manages execution and lifetime of the simulation.
@@ -66,7 +69,7 @@
             {
                 agent.OccupiedCounter--;
 
-                if (agent.CurrentAction.First().Name == "travel_action" && agent.Destination != string.Empty)
+                if (agent.CurrentAction.First.Value.Name == "travel_action" && agent.Destination != string.Empty)
                 {
                     movement = true;
                     agent.MoveCloserToDestination();
@@ -100,7 +103,7 @@
         {
             agent.OccupiedCounter = 0;
             agent.Destination = string.Empty;
-            Action interrupted = agent.CurrentAction.First();
+            Action interrupted = agent.CurrentAction.First.Value;
             agent.CurrentAction.RemoveFirst();
             Console.WriteLine("Agent: " + agent.Name + " was interrupted from action: " + interrupted.Name);
         }
@@ -111,7 +114,7 @@
         /// <param name="agentName">The name of the agent to interrupt.</param>
         public static void Interrupt(string agentName)
         {
-            Agent? agent = AgentManager.GetAgentByName(agentName);
+            Agent agent = AgentManager.GetAgentByName(agentName);
             if (agent != null)
             {
                 Interrupt(agent);
