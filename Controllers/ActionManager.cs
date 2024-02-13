@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
+using Anthology.Models;
 
-namespace Anthology.Models
+namespace Anthology.Controllers
 {
     public static class ActionManager
     {
@@ -85,5 +86,7 @@ namespace Anthology.Models
             if (actions == null) return;
             Actions = actions;
         }
+
+
     }
 }

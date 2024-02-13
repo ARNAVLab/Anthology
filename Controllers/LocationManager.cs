@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
+using Anthology.Models;
 
-namespace Anthology.Models
+namespace Anthology.Controllers
 {
     /** Provides functionality for checking location-centric conditions */
     public static class LocationManager

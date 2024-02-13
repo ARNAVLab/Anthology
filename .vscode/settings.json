@@ -1,0 +1,5 @@
+{
+	"csharpextensions.useFileScopedNamespace": true,
+	"FSharp.externalAutocomplete": true,
+	"FSharp.fullNameExternalAutocomplete": true
+}

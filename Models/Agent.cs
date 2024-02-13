@@ -1,13 +1,14 @@
 ﻿using System.Collections;
 using System.Text.Json;
+using Anthology.Controllers;
 
 namespace Anthology.Models
 {
-    /**
- * Relationship class
- * Relationships are composed by agents, so the owning agent will always be the source of the relationship.
- * eg. an agent that has the 'brother' relationship with Norma is Norma's brother
- */
+	/**
+	* Relationship class
+	* Relationships are composed by agents, so the owning agent will always be the source of the relationship.
+	* eg. an agent that has the 'brother' relationship with Norma is Norma's brother
+	*/
     public class Relationship
     {
         /** The type of relationship, eg. 'student' or 'teacher' */
@@ -19,8 +20,9 @@ namespace Anthology.Models
         /** How strong the relationship is */
         public float Valence { get; set; }
     }
-
-    /**
+	
+	
+	/**
      * Agent class
      * Describes the agent object or NPCs in the simulation 
      */
@@ -64,41 +66,12 @@ namespace Anthology.Models
         public HashSet<Agent> CurrentTargets { get; set; } = new HashSet<Agent>();
 
         /** Starts travel to the agent's destination */
-        public void StartTravelToLocation(SimLocation destination, float time)
-        {
+        public void StartTravelToLocation(SimLocation destination, float time){
             XDestination = destination.X;
             YDestination = destination.Y;
             SimLocation currentLoc = LocationManager.LocationGrid[XLocation][YLocation];
             OccupiedCounter = LocationManager.FindManhattanDistance(currentLoc, destination);
             Console.WriteLine("time: " + time.ToString() + " | " + Name + ": Started " + CurrentAction.First().Name + "; Destination: " + destination.Name);
-        }
-
-        /**
-         * Move closer to the agent's destination
-         * Uses the manhattan distance to move the agent, so either moves along the x or y axis during any tick 
-         */
-        public void MoveCloserToDestination()
-        {
-            if (XDestination == -1) return;
-
-            LocationManager.LocationGrid[XLocation][YLocation].AgentsPresent.Remove(Name);
-
-            if (XLocation != XDestination)
-            {
-                XLocation += XLocation > XDestination ? -1 : 1;
-            }
-            else if (YLocation != YDestination)
-            {
-                YLocation += YLocation > YDestination ? -1 : 1;
-            }
-            else
-            {
-                XDestination = -1;
-                YDestination = -1;
-                return;
-            }
-
-            LocationManager.LocationGrid[XLocation][YLocation].AgentsPresent.Add(Name);
         }
 
         /** Applies the effect of an action to this agent */

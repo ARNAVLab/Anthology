@@ -1,4 +1,6 @@
-﻿namespace Anthology.Models
+﻿using Anthology.Controllers;
+
+namespace Anthology.Models
 {
     /** Motive class all motive types should inherit from */
     public abstract class Motive

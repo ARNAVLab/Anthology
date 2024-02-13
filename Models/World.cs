@@ -1,4 +1,6 @@
-﻿namespace Anthology.Models
+﻿using Anthology.Controllers;
+
+namespace Anthology.Models
 {
     public static class World
     {

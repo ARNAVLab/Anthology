@@ -1,7 +1,8 @@
 ﻿using System.Text.Json;
+using Anthology.Models;
 
-namespace Anthology.Models
-{
+namespace Anthology.Controllers;
+
     public static class AgentManager
     {
         /** Agents in the simulation */
@@ -125,5 +126,32 @@ namespace Anthology.Models
                 Agents.Add(SerializableAgent.DeserializeToAgent(s));
             }
         }
+
+	/**
+         * Move closer to the agent's destination
+         * Uses the manhattan distance to move the agent, so either moves along the x or y axis during any tick 
+         */
+        public void MoveCloserToDestination()
+        {
+            if (XDestination == -1) return;
+
+            LocationManager.LocationGrid[XLocation][YLocation].AgentsPresent.Remove(Name);
+
+            if (XLocation != XDestination)
+            {
+                XLocation += XLocation > XDestination ? -1 : 1;
+            }
+            else if (YLocation != YDestination)
+            {
+                YLocation += YLocation > YDestination ? -1 : 1;
+            }
+            else
+            {
+                XDestination = -1;
+                YDestination = -1;
+                return;
+            }
+
+            LocationManager.LocationGrid[XLocation][YLocation].AgentsPresent.Add(Name);
+        }
     }
-}
