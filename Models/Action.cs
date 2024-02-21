@@ -91,14 +91,7 @@ namespace Anthology.Models
         /// </summary>
         public List<Requirement> GetRequirementsByType(string type)
         {
-            List<Requirement> reqs = new();
-            IEnumerable<Requirement> allReqs = Requirements.GetAll();
-            IEnumerator<Requirement> enumerator = allReqs.GetEnumerator();
-            while (enumerator.MoveNext())
-            {
-                if (enumerator.Current.ReqType == type)
-                    reqs.Add(enumerator.Current);
-            }
+            List<Requirement> reqs = Requirements.GetRequirementsByType(type);
             return reqs;
         }
     }

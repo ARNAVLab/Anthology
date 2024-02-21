@@ -246,5 +246,14 @@ namespace Anthology.Models
             if (Motives != null) reqs.AddRange(Motives);
             return reqs;
         }
+
+		public List<Requirement> GetRequirementsByType(string r_type)
+        {
+            List<Requirement> reqs = new();
+			if (r_type == Requirement.LOCATION and Locations != null) reqs.AddRange(Locations);
+            else if (r_type == Requirement.PEOPLE and People != null) reqs.AddRange(People);
+			if (r_type == Requirement.MOTIVE and Motives != null) reqs.AddRange(Motives);
+            return reqs;
+        }
     }
 }

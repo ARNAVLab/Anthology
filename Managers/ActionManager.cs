@@ -71,7 +71,7 @@ namespace Anthology.Models
             {
                 return action.Name == actionName;
             }
-            Action action = AllActions.Find(HasName);
+            Action? action = AllActions.Find(HasName);
             return action ?? throw new Exception("Action with name: " + actionName + " cannot be found.");
         }
 

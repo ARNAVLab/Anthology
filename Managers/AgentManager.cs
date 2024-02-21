@@ -60,7 +60,7 @@ namespace Anthology.Models
             {
                 return a.Name == name;
             }
-            Agent agent = Agents.Find(MatchName);
+            Agent? agent = Agents.Find(MatchName);
 			return agent ?? throw new ArgumentException("Agent with name: " + name + " does not exist.");
 			
             
