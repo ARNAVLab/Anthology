@@ -6,9 +6,9 @@ namespace Anthology.Models
     public class ErrorViewModel
     {
         /// <summary>
-        /// The request id.
+        /// The request id -- can be null?
         /// </summary>
-        public string? RequestId { get; set; }
+        public string RequestId { get; set; }
 
         /// <summary>
         /// True if request id is present.

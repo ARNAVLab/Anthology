@@ -1,4 +1,6 @@
-﻿namespace Anthology.Models
+﻿using System.Collections.Generic;
+
+namespace Anthology.Models
 {
     /// <summary>
     /// Manages UI for web interface.

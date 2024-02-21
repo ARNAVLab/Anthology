@@ -1,4 +1,6 @@
-﻿namespace Anthology.Models
+﻿using System;
+
+namespace Anthology.Models
 {
     /// <summary>
     /// Factory class that generates agents, locations, and actions.

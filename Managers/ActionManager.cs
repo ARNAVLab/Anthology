@@ -1,4 +1,7 @@
-﻿namespace Anthology.Models
+﻿using System;
+using System.Collections.Generic;
+
+namespace Anthology.Models
 {
     /// <summary>
     /// Manages a container of actions throughout the lifetime of the simulation.
