@@ -91,6 +91,7 @@ namespace Anthology.Models
             OccupiedCounter = (int)Math.Ceiling(LocationManager.DistanceMatrix[currentLoc.ID * LocationManager.LocationCount + destination.ID]);
 			Action _currentAction = CurrentAction.First.Value;
             Console.WriteLine("time: " + time.ToString() + " | " + Name + ": Started " + _currentAction.Name + "; Destination: " + destination.Name);
+
         }
 
         /// <summary>
