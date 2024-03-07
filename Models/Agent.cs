@@ -90,7 +90,7 @@ namespace Anthology.Models
         
 		public void StartTravelToLocation(LocationNode destination, float time)
         {
-			if (Destination.Count > 0) MoveCloserToDestination();
+			// if (Destination.Count > 0) MoveCloserToDestination();
 			// LocationNode currentLoc = CurrentLocation;
             // Destination = destination.Name;
 
@@ -113,10 +113,10 @@ namespace Anthology.Models
         {
             if (Destination.Count == 0) return;
 
-            CurrentLocation.AgentsPresent.Remove(Name);
+            CurrentLocation.LeaveLocation(this);
 			CurrentLocation = Destination[0]; 
 			Destination.RemoveAt(0);
-			CurrentLocation.AgentsPresent.AddLast(Name);
+			CurrentLocation.EnterLocation(this);
         }
 
         /// <summary>
@@ -294,6 +294,16 @@ namespace Anthology.Models
                 Motives[m] = Math.Clamp(Motives[m] - 1, Motive.MIN, Motive.MAX);
             }
         }
+
+		public void EnterLocation(LocationNode new_location){
+			LeaveLocation(CurrentLocation);
+			CurrentLocation = new_location;
+			CurrentLocation.EnterLocation(this);
+		}
+
+		public void LeaveLocation(LocationNode oldLocation){
+			oldLocation.LeaveLocation(this);  //AgentsPresent.Remove(Name);
+		}
     }
 
     /// <summary>

@@ -37,7 +37,7 @@ namespace Anthology.Models
         /// The agents located at this location.
         /// </summary>
         [JsonIgnore]
-        public LinkedList<string> AgentsPresent { get; set; } = new();
+        public HashSet<string> AgentsPresent { get; set; } = new();
 
         /// <summary>
         /// The ID of this location as assigned by LocationManager when added.
@@ -205,11 +205,24 @@ namespace Anthology.Models
             } while (enumerator.MoveNext());
             return true;
         }
-
 		public override string ToString() {
 			return string.Format("{0}({1},{2})", Name, X, Y);
 		}
 
+		public void EnterLocation(Agent agent){
+			AgentsPresent.Add(agent.Name);
+		}
 
+		public void EnterLocation(string agent){
+			AgentsPresent.Add(agent);
+		}
+
+		public void LeaveLocation(Agent agent){
+			AgentsPresent.Add(agent.Name);
+		}
+
+		public void LeaveLocation(string agent){
+			AgentsPresent.Add(agent);
+		}
     }
 }

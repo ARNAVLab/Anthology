@@ -197,19 +197,17 @@ namespace Anthology.Models
         /// <param name="requirements">Requirements that locations must satisfy to be returned.</param>
         /// <param name="agent">Agent relevant for handling agent requirement(s).</param>
         /// <returns>Returns all the locations that satisfied the given requirement, or an empty enumerable if none match.</returns>
-        public static List<LocationNode> LocationsSatisfyingPeopleRequirement(IEnumerable<LocationNode> locations, RPeople requirements, string agent = "")
+        public static List<LocationNode> LocationsSatisfyingPeopleRequirement(IEnumerable<LocationNode> locations, RPeople requirements, string agent_name = "")
         {
-            bool IsLocationValid(LocationNode location)
-            {
-                if (agent == "" || location.AgentsPresent.Contains(agent))
-                {
+			bool IsLocationValid(LocationNode location){
+                if (agent_name == "" || location.AgentsPresent.Contains(agent_name)) {
                     return location.SatisfiesRequirements(requirements);
                 }
-                else
-                {
-                    location.AgentsPresent.AddLast(agent);
+                else {
+					// making sure the People requirements take the agent into account for the test
+                    location.AgentsPresent.Add(agent_name);
                     bool valid = location.SatisfiesRequirements(requirements);
-                    location.AgentsPresent.RemoveLast();
+                    location.AgentsPresent.Remove(agent_name);
                     return valid;
                 }
             }
