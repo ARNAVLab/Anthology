@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 namespace Anthology.Models
@@ -250,7 +251,8 @@ namespace Anthology.Models
 		public List<Requirement> GetRequirementsByType(string r_type)
         {
             List<Requirement> reqs = new();
-			if (r_type == Requirement.LOCATION && Locations != null) reqs.AddRange(Locations);
+      
+			if (r_type == Requirement.LOCATION && Locations != null)  reqs.AddRange(Locations);
             else if (r_type == Requirement.PEOPLE && People != null) reqs.AddRange(People);
 			if (r_type == Requirement.MOTIVE && Motives != null) reqs.AddRange(Motives);
             return reqs;
