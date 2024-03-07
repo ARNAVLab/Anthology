@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using Jint.Parser;
+using Unity.VisualScripting;
 
 namespace Anthology.Models
 {
@@ -72,7 +74,7 @@ namespace Anthology.Models
         /// Can be the empty string if the agent has reached their previous
         /// destination and is executing an action.
         /// </summary>
-        public string Destination { get; set; } = string.Empty;
+        public List<LocationNode> Destination { get; set; } = new();
 
         /// <summary>
         /// List of targets for the agent's current action.
@@ -84,11 +86,19 @@ namespace Anthology.Models
         /// </summary>
         /// <param name="destination">The agent's destination.</param>
         /// <param name="time">The time in which the agent started traveling.</param>
-        public void StartTravelToLocation(LocationNode destination, float time)
+        
+		public void StartTravelToLocation(LocationNode destination, float time)
         {
-            Destination = destination.Name;
-            LocationNode currentLoc = LocationManager.LocationsByName[CurrentLocation];
-            OccupiedCounter = (int)Math.Ceiling(LocationManager.DistanceMatrix[currentLoc.ID * LocationManager.LocationCount + destination.ID]);
+			LocationNode currentLoc = LocationManager.LocationsByName[CurrentLocation];
+            // Destination = destination.Name;
+
+			List<LocationNode> path = LocationManager.FindPathsBetween(currentLoc, destination);
+			Console.WriteLine("Starting travel: {0} -- {1} -- Path: {2}", currentLoc, destination, path);
+
+			Destination = path;
+			OccupiedCounter = path.Count;
+			
+            // OccupiedCounter = (int)Math.Ceiling(LocationManager.DistanceMatrix[currentLoc, destination]);
 			Action _currentAction = CurrentAction.First.Value;
             Console.WriteLine("time: " + time.ToString() + " | " + Name + ": Started " + _currentAction.Name + "; Destination: " + destination.Name);
 
@@ -100,16 +110,11 @@ namespace Anthology.Models
         /// </summary>
         public void MoveCloserToDestination()
         {
-            if (Destination == "") return;
+            if (Destination.Count == 0) return;
 
             LocationManager.LocationsByName[CurrentLocation].AgentsPresent.Remove(Name);
-
-            if (OccupiedCounter == 0)
-            {
-                CurrentLocation = Destination;
-                Destination = string.Empty;
-                LocationManager.LocationsByName[CurrentLocation].AgentsPresent.AddLast(Name);
-            }
+			CurrentLocation = Destination.Pop().Name;
+			LocationManager.LocationsByName[CurrentLocation].AgentsPresent.AddLast(Name);
         }
 
         /// <summary>
@@ -117,7 +122,7 @@ namespace Anthology.Models
         /// </summary>
         public void ExecuteAction()
         {
-            Destination = "";
+            Destination = new();
             OccupiedCounter = 0;
 
             if (CurrentAction.Count > 0)
@@ -226,7 +231,7 @@ namespace Anthology.Models
                 {
                     LocationNode nearestLocation = LocationManager.FindNearestLocationFrom(currentLoc, possibleLocations);
                     /*if (nearestLocation == null) continue;*/
-                    travelTime = LocationManager.DistanceMatrix[currentLoc.ID * LocationManager.LocationCount + nearestLocation.ID];
+                    travelTime = LocationManager.DistanceMatrix[currentLoc, nearestLocation];
                     float deltaUtility = ActionManager.GetEffectDeltaForAgentAction(this, action);
                     float denom = action.MinTime + travelTime;
                     if (denom != 0)
@@ -252,10 +257,13 @@ namespace Anthology.Models
             Action choice = currentChoice[idx];
             LocationNode dest = currentDest[idx];
             CurrentAction.AddLast(choice);
+
+			Console.WriteLine("{2}: Starting action:{0} at location:{1}", choice.Name, dest.Name, Name);
             
 
             if (dest != null && dest != currentLoc)
             {
+				Console.WriteLine("Need to travel to: {0} from {1}", dest, currentLoc);
                 CurrentAction.AddFirst(ActionManager.GetActionByName("travel_action"));
                 StartTravelToLocation(dest, World.Time);
             }
@@ -350,7 +358,7 @@ namespace Anthology.Models
                 CurrentLocation = agent.CurrentLocation,
                 OccupiedCounter = agent.OccupiedCounter,
                 CurrentAction = string.Empty,
-                Destination = agent.Destination,
+                Destination = agent.Destination[0].Name,
                 Relationships = new()
             };
 
@@ -383,12 +391,19 @@ namespace Anthology.Models
         /// <returns>Raw Agent type that was deserialized.</returns>
         public static Agent DeserializeToAgent(SerializableAgent sAgent)
         {
+			List<LocationNode> _destination = new();
+			// Console.WriteLine("Searching for location: {0}", sAgent.Destination);
+
+			if(LocationManager.LocationsByName.ContainsKey(sAgent.Destination)){
+				_destination.Add(LocationManager.LocationsByName[sAgent.Destination]);
+			}
+			
             Agent agent = new()
             {
                 Name = sAgent.Name,
                 CurrentLocation = sAgent.CurrentLocation,
                 OccupiedCounter = sAgent.OccupiedCounter,
-                Destination = sAgent.Destination
+                Destination = _destination
             };
 
             agent.CurrentAction.AddFirst(ActionManager.GetActionByName(sAgent.CurrentAction));

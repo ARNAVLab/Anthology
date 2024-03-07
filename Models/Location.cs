@@ -31,7 +31,7 @@ namespace Anthology.Models
         /// <summary>
         /// The connections between this location and others (directed edges).
         /// </summary>
-        public Dictionary<string, float> Connections { get; set; } = new();
+        public Dictionary<LocationNode, float> Connections { get; set; } = new();
 
         /// <summary>
         /// The agents located at this location.
@@ -45,6 +45,16 @@ namespace Anthology.Models
         /// </summary>
         [JsonIgnore]
         public int ID { get; set; }
+
+		/// <summary>
+		/// Returns connecting nodes 
+		/// Currently assuming only 4 point connections (not diagnals)
+		/// </summary>
+		/// <returns>Array of LocationNodes</returns>
+		public List<LocationNode> GetNeighbours()
+		{
+			return new List<LocationNode>(Connections.Keys);
+		}
 
         /// <summary>
         /// Checks if this location satisfies all of the passed location requirements.
@@ -195,5 +205,11 @@ namespace Anthology.Models
             } while (enumerator.MoveNext());
             return true;
         }
+
+		public override string ToString() {
+			return string.Format("{0}({1},{2})", Name, X, Y);
+		}
+
+
     }
 }

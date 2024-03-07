@@ -137,10 +137,15 @@ namespace Anthology.Models
         /// </summary>
         public static void DecrementMotives()
         {
-            Parallel.ForEach(Agents, a =>
-            {
-                a.DecrementMotives();
-            });
+			foreach (Agent agent in Agents)
+			{
+				agent.DecrementMotives();	
+			}
+			
+            // Parallel.ForEach(Agents, a =>
+            // {
+            //     a.DecrementMotives();
+            // });
         }
     }
 }
