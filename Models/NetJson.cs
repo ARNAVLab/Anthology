@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Text.Json;
 
 namespace Anthology.Models
@@ -25,7 +28,7 @@ namespace Anthology.Models
         public override void InitWorldFromPaths(string pathsFile)
         {
             using FileStream os = File.OpenRead(pathsFile);
-            Dictionary<string, string>? filePaths = JsonSerializer.Deserialize<Dictionary<string, string>>(os, Jso);
+            Dictionary<string, string> filePaths = JsonSerializer.Deserialize<Dictionary<string, string>>(os, Jso);
             if (filePaths == null || filePaths.Count < 3) { throw new FormatException("Unable to load Anthology world state from file"); ; }
             World.Init(filePaths["Actions"], filePaths["Agents"], filePaths["Locations"]);
         }
@@ -37,7 +40,7 @@ namespace Anthology.Models
         public override void LoadActionsFromFile(string path) 
         {
             string actionsText = File.ReadAllText(path);
-            ActionContainer? actions = JsonSerializer.Deserialize<ActionContainer>(actionsText, Jso);
+            ActionContainer actions = JsonSerializer.Deserialize<ActionContainer>(actionsText, Jso);
             if (actions == null) return;
             ActionManager.Actions = actions;
         }
@@ -58,7 +61,7 @@ namespace Anthology.Models
         public override void LoadAgentsFromFile(string path) 
         {
             string agentsText = File.ReadAllText(path);
-            List<SerializableAgent>? sAgents = JsonSerializer.Deserialize<List<SerializableAgent>>(agentsText, Jso);
+            List<SerializableAgent> sAgents = JsonSerializer.Deserialize<List<SerializableAgent>>(agentsText, Jso);
 
             if (sAgents == null) return;
             foreach (SerializableAgent s in sAgents)
@@ -89,7 +92,7 @@ namespace Anthology.Models
         public override void LoadLocationsFromFile(string path) 
         {
             string locationsText = File.ReadAllText(path);
-            IEnumerable<LocationNode>? locationNodes = JsonSerializer.Deserialize<IEnumerable<LocationNode>>(locationsText, Jso);
+            IEnumerable<LocationNode> locationNodes = JsonSerializer.Deserialize<IEnumerable<LocationNode>>(locationsText, Jso);
 
             if (locationNodes == null) return;
             foreach (LocationNode node in locationNodes)

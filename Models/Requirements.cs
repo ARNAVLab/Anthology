@@ -1,4 +1,6 @@
-﻿using System.Text.Json.Serialization;
+﻿
+using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace Anthology.Models
 {
@@ -194,21 +196,21 @@ namespace Anthology.Models
         /// </summary>
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         [JsonPropertyName("Location Requirements")]
-        public List<RLocation>? Locations { get; set; }
+        public List<RLocation> Locations { get; set; }
 
         /// <summary>
         /// People requirements in the container.
         /// </summary>
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         [JsonPropertyName("People Requirements")]
-        public List<RPeople>? People { get; set; }
+        public List<RPeople> People { get; set; }
 
         /// <summary>
         /// Motive requirements in the container.
         /// </summary>
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         [JsonPropertyName("Motive Requirements")]
-        public List<RMotive>? Motives { get; set; }
+        public List<RMotive> Motives { get; set; }
 
         /// <summary>
         /// Add an arbitrary requirement to the container.
@@ -243,6 +245,15 @@ namespace Anthology.Models
             if (Locations != null) reqs.AddRange(Locations);
             if (People != null) reqs.AddRange(People);
             if (Motives != null) reqs.AddRange(Motives);
+            return reqs;
+        }
+
+		public List<Requirement> GetRequirementsByType(string r_type)
+        {
+            List<Requirement> reqs = new();
+			if (r_type == Requirement.LOCATION && Locations != null)  reqs.AddRange(Locations);
+            else if (r_type == Requirement.PEOPLE && People != null) reqs.AddRange(People);
+			if (r_type == Requirement.MOTIVE && Motives != null) reqs.AddRange(Motives);
             return reqs;
         }
     }
