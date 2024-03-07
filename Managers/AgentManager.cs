@@ -43,10 +43,17 @@ namespace Anthology.Models
         public static void AddAgent(Agent agent)
         {
             Agents.Add(agent);
-            if (LocationManager.LocationsByName.ContainsKey(agent.CurrentLocation))
-            {
-                LocationManager.LocationsByName[agent.CurrentLocation].AgentsPresent.AddLast(agent.Name);
-            }
+			agent.CurrentLocation.AgentsPresent.AddLast(agent.Name);
+
+			// foreach (Agent agent in AgentManager.Agents)
+            // {
+            //     if (agent.CurrentLocation == node)
+            //         node.AgentsPresent.AddLast(agent.Name);
+            // }
+            // if (LocationManager.LocationsByName.ContainsKey(agent.CurrentLocation))
+            // {
+            //     LocationManager.LocationsByName[agent.CurrentLocation].AgentsPresent.AddLast(agent.Name);
+            // }
         }
 
         /// <summary>

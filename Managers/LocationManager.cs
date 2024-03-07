@@ -90,11 +90,6 @@ namespace Anthology.Models
                     LocationsByTag.Add(tag, new());
                 LocationsByTag[tag].Add(node);
             }
-            foreach (Agent agent in AgentManager.Agents)
-            {
-                if (agent.CurrentLocation == node.Name)
-                    node.AgentsPresent.AddLast(agent.Name);
-            }
         }
 
         /// <summary>
@@ -105,12 +100,13 @@ namespace Anthology.Models
         /// <param name="y">Y-coordinate of the location.</param>
         /// <param name="tags">Relevant tags of the location.</param>
         /// <param name="connections">Connections from the location to others.</param>
-        public static void AddLocation(string name, float x, float y, IEnumerable<string> tags, Dictionary<LocationNode, float> connections)
-        {
-            List<string> newTags = new();
-            newTags.AddRange(tags);
-            AddLocation(new() { Name = name, X = x, Y = y, Tags = newTags, Connections = connections });
-        }
+		/// 	Sasha delete?
+ ///        // public static void AddLocation(string name, float x, float y, IEnumerable<string> tags, Dictionary<LocationNode, float> connections)
+        // {
+        //     List<string> newTags = new();
+        //     newTags.AddRange(tags);
+        //     AddLocation(new() { Name = name, X = x, Y = y, Tags = newTags, Connections = connections });
+        // }
 
         /// <summary>
         /// Resets and populates the static distance matrix with all-pairs-shortest-path
@@ -274,18 +270,22 @@ namespace Anthology.Models
 					return new();
 				}
 				else {
-					List<LocationNode> path = new();
+					List<LocationNode> path = new List<LocationNode>();
 					path.Add(startLoc);
+					
 					LocationNode temp = startLoc;
 					while(temp != endLoc){
 						temp = NextInPath[temp, endLoc];
 						path.Add(temp);
 					}
+
 					// storing path so it's only calculated once
 					DiscoveredPaths[startLoc, endLoc] = path;
+					List<LocationNode> _oppPath = new List<LocationNode>(path);
+					_oppPath.Reverse();
 
 					// assumption: path is bidirectional (for simplicity) - storing path 
-					DiscoveredPaths[endLoc, startLoc] = path;
+					DiscoveredPaths[endLoc, startLoc] = _oppPath; 
 
 					return path;
 				}
