@@ -59,7 +59,6 @@ namespace Anthology.Models
             }
             Agent agent = Agents.Find(MatchName);
 			return agent ?? throw new ArgumentException("Agent with name: " + name + " does not exist.");
-			
             
         }
 
