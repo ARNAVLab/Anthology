@@ -25,8 +25,8 @@
         {
             Time = 0;
             ActionManager.Init(actionPath);
-            AgentManager.Init(agentPath);
-            LocationManager.Init(locationPath);
+			LocationManager.Init(locationPath);
+            AgentManager.Init(agentPath);            
         }
 
         /// <summary>

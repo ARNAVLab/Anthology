@@ -28,10 +28,15 @@ namespace Anthology.Models
             {
                 if (ToContinue())
                 {
-                    Parallel.ForEach(AgentManager.Agents, agent =>
-                    {
-                        Turn(agent);
-                    });
+					foreach (Agent agent in AgentManager.Agents) {
+						Turn(agent);
+					}
+
+					
+                    // Parallel.ForEach(AgentManager.Agents, agent =>
+                    // {
+                    //     Turn(agent);
+                    // });
 
                     World.IncrementTime();
                 }
@@ -69,7 +74,7 @@ namespace Anthology.Models
             {
                 agent.OccupiedCounter--;
 
-                if (agent.CurrentAction.First.Value.Name == "travel_action" && agent.Destination != string.Empty)
+                if (agent.CurrentAction.First.Value.Name == "travel_action" && agent.Destination.Count > 0)
                 {
                     movement = true;
                     agent.MoveCloserToDestination();
@@ -102,7 +107,7 @@ namespace Anthology.Models
         public static void Interrupt(Agent agent)
         {
             agent.OccupiedCounter = 0;
-            agent.Destination = string.Empty;
+            agent.Destination = new();
             Action interrupted = agent.CurrentAction.First.Value;
             agent.CurrentAction.RemoveFirst();
             Console.WriteLine("Agent: " + agent.Name + " was interrupted from action: " + interrupted.Name);

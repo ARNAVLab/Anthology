@@ -43,10 +43,7 @@ namespace Anthology.Models
         public static void AddAgent(Agent agent)
         {
             Agents.Add(agent);
-            if (LocationManager.LocationsByName.ContainsKey(agent.CurrentLocation))
-            {
-                LocationManager.LocationsByName[agent.CurrentLocation].AgentsPresent.AddLast(agent.Name);
-            }
+			agent.EnterLocation(agent.CurrentLocation);
         }
 
         /// <summary>
@@ -62,7 +59,6 @@ namespace Anthology.Models
             }
             Agent? agent = Agents.Find(MatchName);
 			return agent ?? throw new ArgumentException("Agent with name: " + name + " does not exist.");
-			
             
         }
 
@@ -137,10 +133,15 @@ namespace Anthology.Models
         /// </summary>
         public static void DecrementMotives()
         {
-            Parallel.ForEach(Agents, a =>
-            {
-                a.DecrementMotives();
-            });
+			foreach (Agent agent in Agents)
+			{
+				agent.DecrementMotives();	
+			}
+			
+            // Parallel.ForEach(Agents, a =>
+            // {
+            //     a.DecrementMotives();
+            // });
         }
     }
 }

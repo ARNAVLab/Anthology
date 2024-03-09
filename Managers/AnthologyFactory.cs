@@ -18,6 +18,7 @@ namespace Anthology.Models
             Random r = new();
             for (uint i = 0; i < numAgents; i++)
             {
+				string loc_name = string.Format("l{0}", r.Next(numLocations));
                 Agent a = new()
                 {
                     Name = "a_" + i,
@@ -29,7 +30,7 @@ namespace Anthology.Models
                         { "m4", r.Next(4) + 1 },
                         { "m5", r.Next(4) + 1 }
                     },
-                    CurrentLocation = "l_" + r.Next(numLocations)
+                    CurrentLocation = LocationManager.LocationsByName[loc_name]
                 };
                 AgentManager.AddAgent(a);
             }
@@ -78,12 +79,12 @@ namespace Anthology.Models
                         "t_" + (i % 3),
                         "t_" + ((i % 7) + 3)
                     },
-                    Connections =
-                    {
-                        { "l_" + c[0], r.Next(100) },
-                        { "l_" + c[1], r.Next(100) },
-                        { "l_" + c[2], r.Next(100) }
-                    }
+                    Connections = {}
+                    // {
+                    //     { "l_" + c[0], r.Next(100) },
+                    //     { "l_" + c[1], r.Next(100) },
+                    //     { "l_" + c[2], r.Next(100) }
+                    // }
                 };
                 LocationManager.AddLocation(node);
             }

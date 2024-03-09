@@ -1,8 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.Tracing;
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
+using Jint.Parser;
+using Unity.VisualScripting;
+using UnityEngine;
+using UnityEngine.Rendering.VirtualTexturing;
+using Vector2 = System.Numerics.Vector2;
 
 namespace Anthology.Models
 {
@@ -31,12 +38,18 @@ namespace Anthology.Models
         /// </summary>
         public static int LocationCount { get; set; } = 0;
 
+		public static MKDictionary<LocationNode, LocationNode, List<LocationNode>> DiscoveredPaths { get; set; } = new MKDictionary<LocationNode, LocationNode, List<LocationNode>>();
+
         /// <summary>
         /// The directed distance matrix for determining the travel distance between
         /// any two locations. To obtain the distance from A to B, index into the
         /// matrix like: [A.ID * LocationCount + B.ID].
         /// </summary>
-        public static float[] DistanceMatrix { get; set; } = Array.Empty<float>();
+        // public static float[] DistanceMatrix { get; set; } = Array.Empty<float>();
+		public static MKDictionary<LocationNode, LocationNode, float> DistanceMatrix { get; set; } = new MKDictionary<LocationNode, LocationNode, float>();
+		public static MKDictionary<LocationNode, LocationNode, LocationNode> NextInPath { get; set; } = new MKDictionary<LocationNode, LocationNode, LocationNode>();
+
+		// public static Dictionary<string, List<LocationNode>> LocationsByTag { get; set; } = new();
 
         /// <summary>
         /// Initialize/reset all static location manager variables compute the distance matrix.
@@ -57,7 +70,7 @@ namespace Anthology.Models
             LocationsByName.Clear();
             LocationsByPosition.Clear();
             LocationsByTag.Clear();
-            DistanceMatrix = Array.Empty<float>();
+			DistanceMatrix = new();
             LocationCount = 0;
         }
 
@@ -77,11 +90,6 @@ namespace Anthology.Models
                     LocationsByTag.Add(tag, new());
                 LocationsByTag[tag].Add(node);
             }
-            foreach (Agent agent in AgentManager.Agents)
-            {
-                if (agent.CurrentLocation == node.Name)
-                    node.AgentsPresent.AddLast(agent.Name);
-            }
         }
 
         /// <summary>
@@ -92,12 +100,13 @@ namespace Anthology.Models
         /// <param name="y">Y-coordinate of the location.</param>
         /// <param name="tags">Relevant tags of the location.</param>
         /// <param name="connections">Connections from the location to others.</param>
-        public static void AddLocation(string name, float x, float y, IEnumerable<string> tags, Dictionary<string, float> connections)
-        {
-            List<string> newTags = new();
-            newTags.AddRange(tags);
-            AddLocation(new() { Name = name, X = x, Y = y, Tags = newTags, Connections = connections });
-        }
+		/// 	Sasha delete?
+ ///        // public static void AddLocation(string name, float x, float y, IEnumerable<string> tags, Dictionary<LocationNode, float> connections)
+        // {
+        //     List<string> newTags = new();
+        //     newTags.AddRange(tags);
+        //     AddLocation(new() { Name = name, X = x, Y = y, Tags = newTags, Connections = connections });
+        // }
 
         /// <summary>
         /// Resets and populates the static distance matrix with all-pairs-shortest-path
@@ -105,37 +114,42 @@ namespace Anthology.Models
         /// </summary>
         public static void UpdateDistanceMatrix()
         {
-            DistanceMatrix = new float[LocationCount * LocationCount];
-            Parallel.For(0, LocationCount, loc1 =>
-            {
-                for (int loc2 = 0; loc2 < LocationCount; loc2++)
+			LocationManager.UpdateConnections();
+
+			foreach (LocationNode loc1 in LocationsByName.Values)
+			{
+				foreach (LocationNode loc2 in LocationsByName.Values)
+				{
+					if (loc1 == loc2) DistanceMatrix[loc1,loc2] = 0;
+					DistanceMatrix[loc1,loc2] = (float.MaxValue / 2f) - 1f;
+				}
+			}
+
+            foreach (LocationNode loc1 in LocationsByName.Values){
+                foreach (KeyValuePair<LocationNode, float> connection in loc1.Connections)
                 {
-                    if (loc1 == loc2) DistanceMatrix[loc1 * LocationCount + loc2] = 0;
-                    else DistanceMatrix[loc1 * LocationCount + loc2] = (float.MaxValue / 2f) - 1f;
+                    LocationNode loc2 = connection.Key;
+                    DistanceMatrix[loc1, loc2] = connection.Value;
+
+					// Initializing the nextArray if there's an edge between the nodes 
+					NextInPath[loc1, loc2] = loc2;
                 }
-            });
-            IEnumerable<LocationNode> locationNodes = LocationsByName.Values;
-            Parallel.ForEach(locationNodes, loc1 =>
-            {
-                foreach (KeyValuePair<string, float> con in loc1.Connections)
-                {
-                    LocationNode loc2 = LocationsByName[con.Key];
-                    DistanceMatrix[loc1.ID * LocationCount + loc2.ID] = con.Value;
-                }
-            });
-            for (int k = 0; k < LocationCount; k++)
-            {
-                Parallel.For(0, LocationCount, i =>
-                {
-                    for (int j = 0; j < LocationCount; j++)
-                    {
-                        float d = DistanceMatrix[i * LocationCount + k] + DistanceMatrix[k * LocationCount + j];
-                        if (DistanceMatrix[i * LocationCount + j] > DistanceMatrix[i * LocationCount + k] + DistanceMatrix[k * LocationCount + j])
-                            DistanceMatrix[i * LocationCount + j] = DistanceMatrix[i * LocationCount + k] + DistanceMatrix[k * LocationCount + j];
-                    }
-                });
-            }
-        }
+            };
+
+			foreach (LocationNode locK in LocationsByName.Values){
+				foreach (LocationNode locI in LocationsByName.Values) {
+					foreach (LocationNode locJ in LocationsByName.Values) {
+						float d = DistanceMatrix[locI, locK] + DistanceMatrix[locK, locJ];
+						if (DistanceMatrix[locI, locJ] > d){
+							DistanceMatrix[locI, locJ] = d;
+							NextInPath[locI, locJ] = NextInPath[locI, locK];
+						}
+					}
+				}
+			}
+		}
+
+
 
         /// <summary>
         /// Filter all locations to find those locations that satisfy conditions specified in the location requirement.
@@ -183,19 +197,17 @@ namespace Anthology.Models
         /// <param name="requirements">Requirements that locations must satisfy to be returned.</param>
         /// <param name="agent">Agent relevant for handling agent requirement(s).</param>
         /// <returns>Returns all the locations that satisfied the given requirement, or an empty enumerable if none match.</returns>
-        public static List<LocationNode> LocationsSatisfyingPeopleRequirement(IEnumerable<LocationNode> locations, RPeople requirements, string agent = "")
+        public static List<LocationNode> LocationsSatisfyingPeopleRequirement(IEnumerable<LocationNode> locations, RPeople requirements, string agent_name = "")
         {
-            bool IsLocationValid(LocationNode location)
-            {
-                if (agent == "" || location.AgentsPresent.Contains(agent))
-                {
+			bool IsLocationValid(LocationNode location){
+                if (agent_name == "" || location.AgentsPresent.Contains(agent_name)) {
                     return location.SatisfiesRequirements(requirements);
                 }
-                else
-                {
-                    location.AgentsPresent.AddLast(agent);
+                else {
+					// making sure the People requirements take the agent into account for the test
+                    location.AgentsPresent.Add(agent_name);
                     bool valid = location.SatisfiesRequirements(requirements);
-                    location.AgentsPresent.RemoveLast();
+                    location.AgentsPresent.Remove(agent_name);
                     return valid;
                 }
             }
@@ -220,20 +232,100 @@ namespace Anthology.Models
             IEnumerator<LocationNode> enumerator = locations.GetEnumerator();
             enumerator.MoveNext();
             LocationNode nearest = enumerator.Current;
-            float dist = DistanceMatrix[from.ID * LocationCount + nearest.ID];
-            int row = from.ID * LocationCount;
-            int i;
+            float dist = DistanceMatrix[from, nearest];
+            
             while (enumerator.MoveNext())
             {
-                i = row + enumerator.Current.ID;
-                if (dist > DistanceMatrix[i])
+				LocationNode check = enumerator.Current;
+                if (dist > DistanceMatrix[from, check])
                 {
                     nearest = enumerator.Current;
-                    dist = DistanceMatrix[i];
+                    dist = DistanceMatrix[from, check];
                 }
             }
-
             return nearest;
         }
-    }
+
+		internal static void UpdateConnections()
+		{
+			foreach (LocationNode road in LocationsByTag["Road"])
+			{
+				List<LocationNode> around = FindPOIsAroundLocation(road.X, road.Y);
+				foreach (LocationNode location in around)
+				{
+					road.Connections[location] = 1;
+					location.Connections[road] = 1;
+				}
+			}
+		}
+
+		internal static List<LocationNode> FindPathsBetween(LocationNode startLoc, LocationNode endLoc){
+			if(DiscoveredPaths.ContainsKey(startLoc, endLoc)){
+				return DiscoveredPaths[startLoc, endLoc];
+			}
+			else {
+				if(!NextInPath.ContainsKey(startLoc,endLoc)) {
+					return new();
+				}
+				else {
+					List<LocationNode> path = new List<LocationNode>();
+					path.Add(startLoc);
+					
+					LocationNode temp = startLoc;
+					while(temp != endLoc){
+						temp = NextInPath[temp, endLoc];
+						path.Add(temp);
+					}
+
+					// storing path so it's only calculated once
+					DiscoveredPaths[startLoc, endLoc] = path;
+					List<LocationNode> _oppPath = new List<LocationNode>(path);
+					_oppPath.Reverse();
+
+					// assumption: path is bidirectional (for simplicity) - storing path 
+					DiscoveredPaths[endLoc, startLoc] = _oppPath; 
+
+					return path;
+				}
+			}
+		}
+
+		private static List<LocationNode> FindPOIsAroundLocation(float x, float y)
+		{
+			List<LocationNode> around = new();
+			LocationNode _temp;
+			if(LocationsByPosition.TryGetValue(new(x + 1, y), out _temp)){
+				around.Add(_temp);
+			} 
+			if(LocationsByPosition.TryGetValue(new(x, y + 1), out _temp)){
+				around.Add(_temp);
+			} 
+			if(LocationsByPosition.TryGetValue(new(x - 1, y), out _temp)){
+				around.Add(_temp);
+			} 
+			if(LocationsByPosition.TryGetValue(new(x, y - 1), out _temp)){
+				around.Add(_temp);
+			} 
+			return around;
+		}
+	}
+
+	public class MKDictionary<TKey1,TKey2,TValue> :  Dictionary<Tuple<TKey1, TKey2>, TValue>, IDictionary<Tuple<TKey1, TKey2>, TValue> {
+		public TValue this[TKey1 key1, TKey2 key2] {
+			get { return base[Tuple.Create(key1, key2)]; }
+			
+			set { base[Tuple.Create(key1, key2)] = value; }
+		}
+
+		public void Add(TKey1 key1, TKey2 key2, TValue value)
+		{
+			base.Add(Tuple.Create(key1, key2), value);
+		}
+
+		public bool ContainsKey(TKey1 key1, TKey2 key2)
+		{
+			return base.ContainsKey(Tuple.Create(key1, key2));
+		}
+	}
+
 }
