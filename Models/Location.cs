@@ -213,16 +213,16 @@ namespace Anthology.Models
 			AgentsPresent.Add(agent.Name);
 		}
 
-		public void EnterLocation(string agent){
-			AgentsPresent.Add(agent);
+		public void EnterLocation(string agent_name){
+			AgentsPresent.Add(agent_name);
 		}
 
 		public void LeaveLocation(Agent agent){
 			AgentsPresent.Add(agent.Name);
 		}
 
-		public void LeaveLocation(string agent){
-			AgentsPresent.Add(agent);
+		public void LeaveLocation(string agent_name){
+			AgentsPresent.Add(agent_name);
 		}
     }
 }
