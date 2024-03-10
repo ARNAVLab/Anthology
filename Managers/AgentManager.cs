@@ -43,7 +43,7 @@ namespace Anthology.Models
         public static void AddAgent(Agent agent)
         {
             Agents.Add(agent);
-			agent.EnterLocation(agent.CurrentLocation);
+			// agent.EnterLocation(agent.CurrentLocation);
         }
 
         /// <summary>
@@ -60,6 +60,30 @@ namespace Anthology.Models
             Agent? agent = Agents.Find(MatchName);
 			return agent ?? throw new ArgumentException("Agent with name: " + name + " does not exist.");
             
+        }
+
+		/// <summary>
+        /// Returns whether the agent is content, ie. checks to see if an agent has the maximum motives.
+        /// </summary>
+        /// <returns>True if all motives are at max.</returns>
+        public static bool IsContent(Agent agent)
+        {
+            foreach (float m in agent.Motives.Values)
+            {
+                if (m < Motive.MAX) return false;
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Decrements all the motives of this agent.
+        /// </summary>
+        public static void DecrementMotives(Agent agent)
+        {
+            foreach(string m in agent.Motives.Keys)
+            {
+                agent.Motives[m] = Math.Clamp(agent.Motives[m] - 1, Motive.MIN, Motive.MAX);
+            }
         }
 
         /// <summary>
@@ -121,27 +145,11 @@ namespace Anthology.Models
         /// <returns>True if all agents are content.</returns>
         public static bool AllAgentsContent()
         {
-            foreach (Agent a in Agents)
+            foreach (Agent agent in Agents)
             {
-                if (!a.IsContent()) return false;
+                if (!IsContent(agent)) return false;
             }
             return true;
-        }
-
-        /// <summary>
-        /// Decrements the motives of every agent in the simulation.
-        /// </summary>
-        public static void DecrementMotives()
-        {
-			foreach (Agent agent in Agents)
-			{
-				agent.DecrementMotives();	
-			}
-			
-            // Parallel.ForEach(Agents, a =>
-            // {
-            //     a.DecrementMotives();
-            // });
         }
     }
 }

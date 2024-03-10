@@ -103,5 +103,157 @@ namespace Anthology.Models
 
             return deltaUtility;
         }
+
+		/// <summary>
+        /// Starts an action (if the agent is at a location where the action can be performed).
+        /// Else, makes the agent travel to a suitable location to perform the action.
+        /// </summary>
+        public static void StartAction(Agent agent)
+        {
+            Action action = agent.CurrentAction.First.Value;
+            agent.OccupiedCounter = action.MinTime;
+            
+            if (action is ScheduleAction)
+            {
+                action.CurrentTargets.Clear();
+                foreach (string name in agent.CurrentLocation.AgentsPresent)
+                {
+                    action.CurrentTargets.Add(AgentManager.GetAgentByName(name));
+                }
+            }
+        }
+
+		/// <summary>
+        /// Applies the effect of an action to this agent.
+        /// </summary>
+        public static void ExecuteAction(Agent agent) {
+            agent.Destination = new();
+            agent.OccupiedCounter = 0;
+
+			// Execute the first action queued up
+            if (agent.CurrentAction.Count > 0)
+            {
+                Action action = agent.CurrentAction.First.Value;
+                agent.CurrentAction.RemoveFirst();
+
+                if (action is PrimaryAction pAction)
+                {
+                    foreach (KeyValuePair<string, float> e in pAction.Effects)
+                    {
+                        float delta = e.Value;
+                        float current = agent.Motives[e.Key];
+                        agent.Motives[e.Key] = Math.Clamp(delta + current, Motive.MIN, Motive.MAX);
+                    }
+                }
+                else if (action is ScheduleAction sAction)
+                {
+                    if (sAction.Interrupt)
+                    {
+                        agent.CurrentAction.AddFirst(ActionManager.GetActionByName(sAction.InstigatorAction));
+                    }
+                    else
+                    {
+                        agent.CurrentAction.AddLast(ActionManager.GetActionByName(sAction.InstigatorAction));
+                    }
+                    foreach(Agent target in action.CurrentTargets)
+                    {
+                        if (sAction.Interrupt)
+                        {
+                            target.CurrentAction.AddFirst(ActionManager.GetActionByName(sAction.TargetAction));
+                        }
+                        else
+                        {
+                            target.CurrentAction.AddLast(ActionManager.GetActionByName(sAction.TargetAction));
+                        }
+                    }
+                }
+            }
+        }
+
+		/// <summary>
+        /// Selects an action from a set of valid actions to be performed by this agent.
+        /// Selects the action with the maximal utility of the agent (motive increase / time).
+        /// </summary>
+        public static void SelectNextAction(Agent agent)
+        {
+            float maxDeltaUtility = 0f;
+            List<Action> currentChoice = new();
+            List<LocationNode> currentDest = new();
+            List<string> actionSelectLog = new();
+            // LocationNode currentLoc = LocationManager.LocationsByName[CurrentLocation];
+
+            foreach(Action action in ActionManager.AllActions)
+            {
+                if (action.Hidden) continue;
+                actionSelectLog.Add("Action: " + action.Name);
+
+                float travelTime;
+                List<LocationNode> possibleLocations = new();
+                List<RMotive> rMotives = action.Requirements.Motives;
+                List<RLocation> rLocations = action.Requirements.Locations;
+                List<RPeople> rPeople = action.Requirements.People;
+
+                if (rMotives != null)
+                {
+                    if (!AgentManager.AgentSatisfiesMotiveRequirement(agent, rMotives))
+                    {
+                        continue;
+                    }
+                }
+                if (rLocations != null)
+                {
+                    possibleLocations = LocationManager.LocationsSatisfyingLocationRequirement(rLocations[0]);
+                }
+                else
+                {
+                    possibleLocations.AddRange(LocationManager.LocationsByName.Values);
+                }
+                if (rPeople != null && possibleLocations.Count > 0)
+                {
+                    possibleLocations = LocationManager.LocationsSatisfyingPeopleRequirement(possibleLocations, rPeople[0]);
+                }
+
+                if (possibleLocations.Count > 0)
+                {
+                    LocationNode nearestLocation = LocationManager.FindNearestLocationFrom(agent.CurrentLocation, possibleLocations);
+                    /*if (nearestLocation == null) continue;*/
+                    travelTime = LocationManager.DistanceMatrix[agent.CurrentLocation, nearestLocation];
+                    float deltaUtility = ActionManager.GetEffectDeltaForAgentAction(agent, action);
+                    float denom = action.MinTime + travelTime;
+                    if (denom != 0)
+                        deltaUtility /= denom;
+
+                    if (deltaUtility == maxDeltaUtility)
+                    {
+                        currentChoice.Add(action);
+                        currentDest.Add(nearestLocation);
+                    }
+                    else if (deltaUtility > maxDeltaUtility)
+                    {
+                        maxDeltaUtility = deltaUtility;
+                        currentChoice.Clear();
+                        currentDest.Clear();
+                        currentChoice.Add(action);
+                        currentDest.Add(nearestLocation);
+                    }
+                }
+            }
+            System.Random r = new();
+            int idx = r.Next(0, currentChoice.Count);
+            Action choice = currentChoice[idx];
+            LocationNode dest = currentDest[idx];
+            agent.CurrentAction.AddLast(choice);
+
+			if (dest != null && dest != agent.CurrentLocation)
+            {
+				// Debug.LogFormat("Need to travel to: {0} from {1}", dest, agent.CurrentLocation);
+                agent.CurrentAction.AddFirst(ActionManager.GetActionByName("travel_action"));
+                agent.StartTravelToLocation(dest, World.Time);
+            }
+            else if (dest == null || dest == agent.CurrentLocation)
+            {
+                StartAction(agent);
+            }
+        }
     }
 }

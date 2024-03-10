@@ -39,9 +39,9 @@
             {
                 foreach (Agent agent in AgentManager.Agents)
                 {
-                    if (!agent.IsContent())
+                    if (!AgentManager.IsContent(agent))
                     {
-                        agent.DecrementMotives();
+                        AgentManager.DecrementMotives(agent);
                     }
                 }
             }

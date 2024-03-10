@@ -94,6 +94,11 @@ namespace Anthology.Models
             List<Requirement> reqs = Requirements.GetRequirementsByType(type);
             return reqs;
         }
+
+		/// <summary>
+        /// List of current targets for the this action.
+        /// </summary>
+        public List<Agent> CurrentTargets { get; set; } = new();
     }
 
     /// <summary>
