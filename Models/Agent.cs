@@ -95,13 +95,13 @@ namespace Anthology.Models
             // Destination = destination.Name;
 
 			List<LocationNode> path = LocationManager.FindPathsBetween(CurrentLocation, destination);
-			Debug.LogFormat("{3}: From:{0} | To:{1} | Path:{2}", CurrentLocation, destination, string.Join(", ", path), Name);
+			// Debug.LogFormat("{3}: From:{0} | To:{1} | Path:{2}", CurrentLocation, destination, string.Join(", ", path), Name);
 
 			Destination = path;
 			OccupiedCounter = path.Count;
 
 			Action _currentAction = CurrentAction.First.Value;
-            Console.WriteLine("time: " + time.ToString() + " | " + Name + ": Started " + _currentAction.Name + "; Destination: " + destination.Name);
+            // Console.WriteLine("time: " + time.ToString() + " | " + Name + ": Started " + _currentAction.Name + "; Destination: " + destination.Name);
 
         }
 
