@@ -47,10 +47,17 @@ namespace Anthology.Models
         /// <param name="path">Path to JSON file containing all actions.</param>
         public override void LoadActionsFromFile(string path) 
         {
-            string actionsText = File.ReadAllText(path);
-            ActionContainer actions = JsonSerializer.Deserialize<ActionContainer>(actionsText, Jso);
-            if (actions == null) return;
-            ActionManager.Actions = actions;
+			string actionsText = File.ReadAllText(path);
+			List<Action> sActions = JsonSerializer.Deserialize<List<Action>>(actionsText, Jso);
+			foreach (Action deserialized_action in sActions)
+            {
+                ActionManager.Actions[deserialized_action.Name] = deserialized_action;
+            }
+
+            // string actionsText = File.ReadAllText(path);
+            // ActionContainer actions = JsonSerializer.Deserialize<ActionContainer>(actionsText, Jso);
+            // if (actions == null) return;
+            // ActionManager.Actions = actions;
         }
 
         /// <summary>
@@ -69,27 +76,12 @@ namespace Anthology.Models
         public override void LoadAgentsFromFile(string path) 
         {
 			string agentsText = File.ReadAllText(path);
-			// List<JObject> responseObjects = JsonConvert.DeserializeObject<List<JObject>>(agentsText); //Deserialized JSON to type of JObject
-			JObject responseObjects = JObject.Parse(agentsText);
-			
-
-			// JObject responseObject = JsonConvert.DeserializeObject<JObject>(agentsText);
-
-			foreach (var agentObj in responseObjects)
-			{
-				Console.WriteLine(agentObj.Key, agentObj.Value);
-				// LocationNode _location = agentObj.CurrentLocation;
-			}
-			
-			// var robert = responseObject["Robert"].ToObject<Student>();
-            // string agentsText = File.ReadAllText(path);
-			// List<Agent> sAgents = JsonSerializer.Deserialize<List<Agent>>(agentsText, Jso);
-			// // // List<Agent> sAgents = JsonConvert.DeserializeObject<List<Agent>>(agentsText); //<wrapper>(json);
-
-            // foreach (Agent deserialized_agent in sAgents)
-            // {
-            //     AgentManager.Agents.Add(deserialized_agent);
-            // }
+			List<Agent> sAgents = JsonSerializer.Deserialize<List<Agent>>(agentsText, Jso);
+			foreach (Agent deserialized_agent in sAgents)
+            {
+				deserialized_agent.CurrentAction.AddFirst(ActionManager.GetActionByName("wait_action"));
+                AgentManager.Agents.Add(deserialized_agent);
+            }
         }
 
         /// <summary>

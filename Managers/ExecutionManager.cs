@@ -32,7 +32,6 @@ namespace Anthology.Models
 					foreach (Agent agent in AgentManager.Agents) {
 						Turn(agent);
 					}
-
 					
                     // Parallel.ForEach(AgentManager.Agents, agent =>
                     // {

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text.Json.Serialization;
 using UnityEngine;
 
@@ -74,9 +75,24 @@ namespace Anthology.Models
 		/// </summary>
 		/// <param name="motiveName">Motive Name (eg. Accomplishment, Financial, etc)</param>
 		/// <returns>Property value</returns>
-		public object this[string motiveName] {
-			get { return (float)this.GetType().GetProperty(motiveName).GetValue(this, null); }
-			set { this.GetType().GetProperty(motiveName).SetValue(this, (float)value, null); }
+		public float this[string motiveName]
+		{
+			get { 
+				PropertyInfo prop = this.GetType().GetProperty(motiveName);
+				if(prop == null)
+					throw new ArgumentException(String.Format(
+						"{0} is not a Motive.",
+						motiveName));
+				return  (float)prop.GetValue(this, null); 
+			}
+			set {
+				PropertyInfo prop = this.GetType().GetProperty(motiveName);
+				if(prop == null)
+					throw new ArgumentException(String.Format(
+						"{0} is not a Motive.",
+						motiveName));
+				prop.SetValue(this, (float)value, null); 
+			}
 		}
 
 		/// <summary>

@@ -23,7 +23,7 @@ namespace Anthology.Models
                 {
                     Name = "a_" + i,
                     Motives = Motive.MakeRandomMotives(),
-                    CurrLocation = LocationManager.LocationsByName[loc_name]
+                    CurrentLocation = LocationManager.LocationsByName[loc_name]
                 };
                 AgentManager.AddAgent(agent);
             }
@@ -91,8 +91,11 @@ namespace Anthology.Models
         public static void GeneratePrimaryActions(uint n)
         {
             ActionManager.Reset();
-            ActionManager.AddAction(new PrimaryAction() { Name = "wait_action" });
-            ActionManager.AddAction(new PrimaryAction() { Name = "travel_action" });
+			ActionManager.AddAction(new Action() { Name = "wait_action" });
+			ActionManager.AddAction(new Action() { Name = "travel_action" });
+
+            // ActionManager.AddAction(new PrimaryAction() { Name = "wait_action" });
+            // ActionManager.AddAction(new PrimaryAction() { Name = "travel_action" });
 
             Random r = new();
             for (uint i = 0; i < n; i++)
@@ -112,16 +115,17 @@ namespace Anthology.Models
                         break;
                 }
 
-                PrimaryAction a = new()
+                // PrimaryAction a = new()
+				Action a = new()
                 {
                     Name = "action_" + i,
                     Effects =
                     {
-                        { "m1", r.Next(2) },
-                        { "m2", r.Next(2) },
-                        { "m3", r.Next(2) },
-                        { "m4", r.Next(2) },
-                        { "m5", r.Next(2) }
+                        // { "m1", r.Next(2) },
+                        // { "m2", r.Next(2) },
+                        // { "m3", r.Next(2) },
+                        // { "m4", r.Next(2) },
+                        // { "m5", r.Next(2) }
                     },
                     MinTime = r.Next(285) + 15,
                     Requirements =
@@ -129,7 +133,7 @@ namespace Anthology.Models
                         Locations = new() { rl }
                     }
                 };
-                ActionManager.Actions.AddAction(a);
+                ActionManager.AddAction(a);
             }
         }
     }

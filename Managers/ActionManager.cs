@@ -11,12 +11,13 @@ namespace Anthology.Models
         /// <summary>
         /// Actions available in the simulation.
         /// </summary>
-        public static ActionContainer Actions { get; set; } = new();
+		public static Dictionary<string, Action> Actions {get; set;} = new();
+		// public static ActionContainer Actions { get; set; } = new();
 
         /// <summary>
         /// Compiled list of all actions of both scheduled and primary actions.
         /// </summary>
-        public static List<Action> AllActions { get; set; } = new();
+        // public static List<Action> AllActions { get; set; } = new();
 
         /// <summary>
         /// Initializes/resets all action manager variables.
@@ -24,19 +25,8 @@ namespace Anthology.Models
         /// <param name="path">Path of actions JSON file.</param>
         public static void Init(string path)
         {
-            Actions.ScheduleActions.Clear();
-            Actions.PrimaryActions.Clear();
-            AllActions.Clear();
+			Actions.Clear();
             World.ReadWrite.LoadActionsFromFile(path);
-
-            foreach (Action action in Actions.ScheduleActions)
-            {
-                AllActions.Add(action);
-            }
-            foreach (Action action in Actions.PrimaryActions)
-            {
-                AllActions.Add(action);
-            }
         }
 
         /// <summary>
@@ -44,9 +34,9 @@ namespace Anthology.Models
         /// </summary>
         public static void Reset()
         {
-            Actions.ScheduleActions.Clear();
-            Actions.PrimaryActions.Clear();
-            AllActions.Clear();
+            // Actions.ScheduleActions.Clear();
+            // Actions.PrimaryActions.Clear();
+            Actions.Clear();
         }
 
         /// <summary>
@@ -55,8 +45,7 @@ namespace Anthology.Models
         /// <param name="action">The action to add.</param>
         public static void AddAction(Action action)
         {
-            Actions.AddAction(action);
-            AllActions.Add(action);
+            Actions[action.Name] = action;
         }
 
         /// <summary>
@@ -67,12 +56,10 @@ namespace Anthology.Models
         /// <exception cref="Exception">Thrown when action cannot be found.</exception>
         public static Action GetActionByName(string actionName)
         {
-            bool HasName(Action action)
-            {
-                return action.Name == actionName;
-            }
-            Action? action = AllActions.Find(HasName);
-            return action ?? throw new Exception("Action with name: " + actionName + " cannot be found.");
+			if(Actions.ContainsKey(actionName)){
+				return Actions[actionName];
+			}
+            throw new Exception("Action with name: " + actionName + " cannot be found.");
         }
 
         /// <summary>
@@ -86,22 +73,19 @@ namespace Anthology.Models
         {
             float deltaUtility = 0f;
 
-            if (action is PrimaryAction pAction)
-            {
-                foreach (KeyValuePair<string, float> e in pAction.Effects)
-                {
-                    float delta = e.Value;
-                    float current = (float)agent.Motives[e.Key];
-                    deltaUtility += Math.Clamp(delta + current, Motive.MIN, Motive.MAX) - current;
-                }
-                return deltaUtility;
-            }
-            else if (action is ScheduleAction sAction)
-            {
-                return GetEffectDeltaForAgentAction(agent, GetActionByName(sAction.InstigatorAction));
-            }
+			foreach (MotiveEffect motiveEffect in action.Effects.Motives) {
+				float delta = motiveEffect.Delta;
+				float current = (float)agent.Motives[motiveEffect.MotiveType];
+				deltaUtility += Math.Clamp(delta + current, Motive.MIN, Motive.MAX) - current;
+			}
 
-            return deltaUtility;
+			foreach (RelationshipEffect relationshipEffect in action.Effects.Relationships) {
+				// string RelType {get; set;} = string.Empty;
+				// public Agent With {get; set;} = new();
+				// public float ValenceDelta {get; set;} = 0;
+				throw new NotImplementedException();
+			}
+			return deltaUtility;
         }
 
 		/// <summary>
@@ -113,14 +97,15 @@ namespace Anthology.Models
             Action action = agent.CurrentAction.First.Value;
             agent.OccupiedCounter = action.MinTime;
             
-            if (action is ScheduleAction)
-            {
-                action.CurrentTargets.Clear();
-                foreach (string name in agent.CurrLocation.AgentsPresent)
-                {
-                    action.CurrentTargets.Add(AgentManager.GetAgentByName(name));
-                }
-            }
+            // if (action is ScheduleAction)
+            // {
+			// 	ScheduleAction schedAct = (ScheduleAction)action;
+            //     schedAct.CurrentTargets.Clear();
+            //     foreach (string name in agent.CurrentLocation.AgentsPresent)
+            //     {
+            //         schedAct.CurrentTargets.Add(AgentManager.GetAgentByName(name));
+            //     }
+            // }
         }
 
 		/// <summary>
@@ -131,7 +116,7 @@ namespace Anthology.Models
         
 		public static void StartTravelToLocation(Agent agent, LocationNode destination, float time)
         {
-			List<LocationNode> path = LocationManager.FindPathsBetween(agent.CurrLocation, destination);
+			List<LocationNode> path = LocationManager.FindPathsBetween(agent.CurrentLocation, destination);
 			agent.Destination = path;
 			agent.OccupiedCounter = path.Count;
 			Action _currentAction = agent.CurrentAction.First.Value;
@@ -144,7 +129,7 @@ namespace Anthology.Models
         public static void MoveCloserToDestination(Agent agent)
         {
             if (agent.Destination.Count == 0) return;
-			agent.CurrLocation = agent.Destination[0]; 
+			agent.CurrentLocation = agent.Destination[0]; 
 			agent.Destination.RemoveAt(0);
         }
 
@@ -161,36 +146,36 @@ namespace Anthology.Models
                 Action action = agent.CurrentAction.First.Value;
                 agent.CurrentAction.RemoveFirst();
 
-                if (action is PrimaryAction pAction)
-                {
-                    foreach (KeyValuePair<string, float> e in pAction.Effects)
-                    {
-                        float delta = e.Value;
-                        agent.Motives[e.Key] =  (float)agent.Motives[e.Key] + delta;
-                    }
-                }
-                else if (action is ScheduleAction sAction)
-                {
-                    if (sAction.Interrupt)
-                    {
-                        agent.CurrentAction.AddFirst(ActionManager.GetActionByName(sAction.InstigatorAction));
-                    }
-                    else
-                    {
-                        agent.CurrentAction.AddLast(ActionManager.GetActionByName(sAction.InstigatorAction));
-                    }
-                    foreach(Agent target in action.CurrentTargets)
-                    {
-                        if (sAction.Interrupt)
-                        {
-                            target.CurrentAction.AddFirst(ActionManager.GetActionByName(sAction.TargetAction));
-                        }
-                        else
-                        {
-                            target.CurrentAction.AddLast(ActionManager.GetActionByName(sAction.TargetAction));
-                        }
-                    }
-                }
+				foreach (MotiveEffect motiveEffect in action.Effects.Motives) {
+					agent.Motives[motiveEffect.MotiveType] = (float)agent.Motives[motiveEffect.MotiveType] + motiveEffect.Delta;
+				}
+
+				foreach (RelationshipEffect motiveEffect in action.Effects.Relationships) {
+					throw new NotImplementedException();
+				}
+                // }
+                // else if (action is ScheduleAction sAction)
+                // {
+                //     if (sAction.Interrupt)
+                //     {
+                //         agent.CurrentAction.AddFirst(ActionManager.GetActionByName(sAction.InstigatorAction));
+                //     }
+                //     else
+                //     {
+                //         agent.CurrentAction.AddLast(ActionManager.GetActionByName(sAction.InstigatorAction));
+                //     }
+                //     foreach(Agent target in action.CurrentTargets)
+                //     {
+                //         if (sAction.Interrupt)
+                //         {
+                //             target.CurrentAction.AddFirst(ActionManager.GetActionByName(sAction.TargetAction));
+                //         }
+                //         else
+                //         {
+                //             target.CurrentAction.AddLast(ActionManager.GetActionByName(sAction.TargetAction));
+                //         }
+                //     }
+                // }
             }
         }
 
@@ -206,7 +191,7 @@ namespace Anthology.Models
             List<string> actionSelectLog = new();
             // LocationNode currentLoc = LocationManager.LocationsByName[CurrentLocation];
 
-            foreach(Action action in ActionManager.AllActions)
+            foreach(Action action in ActionManager.Actions.Values)
             {
                 if (action.Hidden) continue;
                 actionSelectLog.Add("Action: " + action.Name);
@@ -239,9 +224,9 @@ namespace Anthology.Models
 
                 if (possibleLocations.Count > 0)
                 {
-                    LocationNode nearestLocation = LocationManager.FindNearestLocationFrom(agent.CurrLocation, possibleLocations);
+                    LocationNode nearestLocation = LocationManager.FindNearestLocationFrom(agent.CurrentLocation, possibleLocations);
                     /*if (nearestLocation == null) continue;*/
-                    travelTime = LocationManager.DistanceMatrix[agent.CurrLocation, nearestLocation];
+                    travelTime = LocationManager.DistanceMatrix[agent.CurrentLocation, nearestLocation];
                     float deltaUtility = ActionManager.GetEffectDeltaForAgentAction(agent, action);
                     float denom = action.MinTime + travelTime;
                     if (denom != 0)
@@ -268,13 +253,13 @@ namespace Anthology.Models
             LocationNode dest = currentDest[idx];
             agent.CurrentAction.AddLast(choice);
 
-			if (dest != null && dest != agent.CurrLocation)
+			if (dest != null && dest != agent.CurrentLocation)
             {
 				// Debug.LogFormat("Need to travel to: {0} from {1}", dest, agent.CurrentLocation);
                 agent.CurrentAction.AddFirst(ActionManager.GetActionByName("travel_action"));
                 StartTravelToLocation(agent, dest, World.Time);
             }
-            else if (dest == null || dest == agent.CurrLocation)
+            else if (dest == null || dest == agent.CurrentLocation)
             {
                 StartAction(agent);
             }
