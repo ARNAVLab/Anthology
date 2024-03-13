@@ -11,27 +11,32 @@ namespace Anthology.Models
         /// <summary>
         /// The name of the location.
         /// </summary>
+		[JsonPropertyName("Name")]	
         public string Name { get; set; } = string.Empty;
 
         /// <summary>
         /// The X-coordinate of this location.
         /// </summary>
-        public float X { get; set; }
+        [JsonPropertyName("X")]
+		public float X { get; set; }
 
         /// <summary>
         /// The Y-coordinate of this location.
         /// </summary>
+		[JsonPropertyName("Y")]
         public float Y { get; set; }
 
         /// <summary>
         /// The tags associated with this location.
         /// </summary>
+		[JsonPropertyName("Tags")]
         public List<string> Tags { get; set; } = new();
 
         /// <summary>
         /// The connections between this location and others (directed edges).
         /// </summary>
-        public Dictionary<LocationNode, float> Connections { get; set; } = new();
+        [JsonIgnore]
+		public Dictionary<LocationNode, float> Connections { get; set; } = new();
 
         /// <summary>
         /// The agents located at this location.

@@ -15,24 +15,17 @@ namespace Anthology.Models
         public static void GenerateAgents(int numAgents, int numLocations)
         {
             AgentManager.Reset();
-            Random r = new();
+            Random random = new();
             for (uint i = 0; i < numAgents; i++)
             {
-				string loc_name = string.Format("l{0}", r.Next(numLocations));
-                Agent a = new()
+				string loc_name = string.Format("l{0}", random.Next(numLocations));
+                Agent agent = new()
                 {
                     Name = "a_" + i,
-                    Motives =
-                    {
-                        { "m1", r.Next(4) + 1 },
-                        { "m2", r.Next(4) + 1 },
-                        { "m3", r.Next(4) + 1 },
-                        { "m4", r.Next(4) + 1 },
-                        { "m5", r.Next(4) + 1 }
-                    },
-                    CurrentLocation = LocationManager.LocationsByName[loc_name]
+                    Motives = Motive.MakeRandomMotives(),
+                    CurrLocation = LocationManager.LocationsByName[loc_name]
                 };
-                AgentManager.AddAgent(a);
+                AgentManager.AddAgent(agent);
             }
         }
 

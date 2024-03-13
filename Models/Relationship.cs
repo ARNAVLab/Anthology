@@ -12,17 +12,20 @@ namespace Anthology.Models
         /// <summary>
         /// The type of relationship, eg. 'student' or 'teacher'.
         /// </summary>
-        public string Type { get; set; } = string.Empty;
+        [JsonPropertyName("Type")]
+		public string Type { get; set; } = string.Empty;
 
         /// <summary>
         /// The agent that this relationship is with.
         /// </summary>
-        public string With { get; set; } = string.Empty;
+        [JsonPropertyName("With")]
+		public string With { get; set; } = string.Empty;
 
         /// <summary>
         /// How strong the relationship is.
         /// </summary>
-        public float Valence { get; set; }
+        [JsonPropertyName("Valence")]
+		public float Valence { get; set; }
     }
 
 }

@@ -91,7 +91,7 @@ namespace Anthology.Models
                 foreach (KeyValuePair<string, float> e in pAction.Effects)
                 {
                     float delta = e.Value;
-                    float current = agent.Motives[e.Key];
+                    float current = (float)agent.Motives[e.Key];
                     deltaUtility += Math.Clamp(delta + current, Motive.MIN, Motive.MAX) - current;
                 }
                 return deltaUtility;
@@ -116,11 +116,36 @@ namespace Anthology.Models
             if (action is ScheduleAction)
             {
                 action.CurrentTargets.Clear();
-                foreach (string name in agent.CurrentLocation.AgentsPresent)
+                foreach (string name in agent.CurrLocation.AgentsPresent)
                 {
                     action.CurrentTargets.Add(AgentManager.GetAgentByName(name));
                 }
             }
+        }
+
+		/// <summary>
+        /// Starts travel to the agent's destination.
+        /// </summary>
+        /// <param name="destination">The agent's destination.</param>
+        /// <param name="time">The time in which the agent started traveling.</param>
+        
+		public static void StartTravelToLocation(Agent agent, LocationNode destination, float time)
+        {
+			List<LocationNode> path = LocationManager.FindPathsBetween(agent.CurrLocation, destination);
+			agent.Destination = path;
+			agent.OccupiedCounter = path.Count;
+			Action _currentAction = agent.CurrentAction.First.Value;
+        }
+
+        /// <summary>
+        /// Moves closer to the agent's destination.
+        /// Uses the manhattan distance to move the agent, so either moves along the x or y axis during any tick.
+        /// </summary>
+        public static void MoveCloserToDestination(Agent agent)
+        {
+            if (agent.Destination.Count == 0) return;
+			agent.CurrLocation = agent.Destination[0]; 
+			agent.Destination.RemoveAt(0);
         }
 
 		/// <summary>
@@ -141,8 +166,7 @@ namespace Anthology.Models
                     foreach (KeyValuePair<string, float> e in pAction.Effects)
                     {
                         float delta = e.Value;
-                        float current = agent.Motives[e.Key];
-                        agent.Motives[e.Key] = Math.Clamp(delta + current, Motive.MIN, Motive.MAX);
+                        agent.Motives[e.Key] =  (float)agent.Motives[e.Key] + delta;
                     }
                 }
                 else if (action is ScheduleAction sAction)
@@ -215,9 +239,9 @@ namespace Anthology.Models
 
                 if (possibleLocations.Count > 0)
                 {
-                    LocationNode nearestLocation = LocationManager.FindNearestLocationFrom(agent.CurrentLocation, possibleLocations);
+                    LocationNode nearestLocation = LocationManager.FindNearestLocationFrom(agent.CurrLocation, possibleLocations);
                     /*if (nearestLocation == null) continue;*/
-                    travelTime = LocationManager.DistanceMatrix[agent.CurrentLocation, nearestLocation];
+                    travelTime = LocationManager.DistanceMatrix[agent.CurrLocation, nearestLocation];
                     float deltaUtility = ActionManager.GetEffectDeltaForAgentAction(agent, action);
                     float denom = action.MinTime + travelTime;
                     if (denom != 0)
@@ -244,13 +268,13 @@ namespace Anthology.Models
             LocationNode dest = currentDest[idx];
             agent.CurrentAction.AddLast(choice);
 
-			if (dest != null && dest != agent.CurrentLocation)
+			if (dest != null && dest != agent.CurrLocation)
             {
 				// Debug.LogFormat("Need to travel to: {0} from {1}", dest, agent.CurrentLocation);
                 agent.CurrentAction.AddFirst(ActionManager.GetActionByName("travel_action"));
-                agent.StartTravelToLocation(dest, World.Time);
+                StartTravelToLocation(agent, dest, World.Time);
             }
-            else if (dest == null || dest == agent.CurrentLocation)
+            else if (dest == null || dest == agent.CurrLocation)
             {
                 StartAction(agent);
             }

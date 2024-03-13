@@ -1,7 +1,14 @@
 using System;
+using System.Reflection;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
+using Jint.Parser;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using JsonSerializer = System.Text.Json.JsonSerializer;
+using Amazon.Runtime.Internal.Util;
+using System.Diagnostics;
 
 namespace Anthology.Models
 {
@@ -17,6 +24,7 @@ namespace Anthology.Models
         {
             Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
             WriteIndented = true
+			// JsonSerializerOptions.Converters.Add(new AgentJSONConverter())
         };
 
         /// <summary>
@@ -60,14 +68,28 @@ namespace Anthology.Models
         /// <param name="path">Path of JSON file to load agents from.</param>
         public override void LoadAgentsFromFile(string path) 
         {
-            string agentsText = File.ReadAllText(path);
-            List<SerializableAgent> sAgents = JsonSerializer.Deserialize<List<SerializableAgent>>(agentsText, Jso);
+			string agentsText = File.ReadAllText(path);
+			// List<JObject> responseObjects = JsonConvert.DeserializeObject<List<JObject>>(agentsText); //Deserialized JSON to type of JObject
+			JObject responseObjects = JObject.Parse(agentsText);
+			
 
-            if (sAgents == null) return;
-            foreach (SerializableAgent s in sAgents)
-            {
-                AgentManager.Agents.Add(SerializableAgent.DeserializeToAgent(s));
-            }
+			// JObject responseObject = JsonConvert.DeserializeObject<JObject>(agentsText);
+
+			foreach (var agentObj in responseObjects)
+			{
+				Console.WriteLine(agentObj.Key, agentObj.Value);
+				// LocationNode _location = agentObj.CurrentLocation;
+			}
+			
+			// var robert = responseObject["Robert"].ToObject<Student>();
+            // string agentsText = File.ReadAllText(path);
+			// List<Agent> sAgents = JsonSerializer.Deserialize<List<Agent>>(agentsText, Jso);
+			// // // List<Agent> sAgents = JsonConvert.DeserializeObject<List<Agent>>(agentsText); //<wrapper>(json);
+
+            // foreach (Agent deserialized_agent in sAgents)
+            // {
+            //     AgentManager.Agents.Add(deserialized_agent);
+            // }
         }
 
         /// <summary>
@@ -76,13 +98,13 @@ namespace Anthology.Models
         /// <returns>String representation of all serialized agents.</returns>
         public override string SerializeAllAgents()
         {
-            List<SerializableAgent> sAgents = new();
-            foreach(Agent a in AgentManager.Agents)
-            {
-                sAgents.Add(SerializableAgent.SerializeAgent(a));
-            }
+            // List<SerializableAgent> sAgents = new();
+            // foreach(Agent a in AgentManager.Agents)
+            // {
+            //     sAgents.Add(SerializableAgent.SerializeAgent(a));
+            // }
 
-            return JsonSerializer.Serialize(sAgents, Jso);
+            return JsonSerializer.Serialize(AgentManager.Agents, Jso);
         }
 
         /// <summary>
@@ -110,4 +132,82 @@ namespace Anthology.Models
             return JsonSerializer.Serialize(LocationManager.LocationsByName.Values, Jso);
         }
     }
+	// public class AgentJSONConverter : System.Text.Json.Serialization.JsonConverter<Agent>
+	// {
+	// 	// Overrides the JSONConverter for Agent, and assigns the correct location instance to CurrentLocation
+	// 	public override Agent ReadJson(Newtonsoft.Json.JsonReader reader, Type objectType, Agent existingValue, bool hasExistingValue, Newtonsoft.Json.JsonSerializer serializer){
+	// 	// public override Agent Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+	// 		JObject jObject = JObject.Load(reader);
+
+	// 		string currLocName = jObject["CurrentLocation"].ToObject<string>();
+	// 		Action _action = null; 
+
+	// 		if (jObject["CurrentAction"] != null && (string)jObject["CurrentAction"] != "wait_action"){
+	// 			string currActionName = jObject["CurrentAction"].ToObject<string>();
+	// 			_action = ActionManager.GetActionByName(currActionName);
+	// 		}
+	// 		else{
+	// 			_action = ActionManager.GetActionByName("wait_action");
+	// 		}
+	// 		LocationNode _currentLocation = LocationManager.LocationsByName[currLocName];
+
+	// 		Agent agent = (Agent)base.ReadJson(jObject.CreateReader(), objectType, existingValue, serializer);
+	// 		agent.CurrentLocation = _currentLocation;
+	// 		agent.CurrentAction.AddFirst(_action);
+			
+	// 		return agent;
+	// 	}
+
+	// 	public override bool CanRead
+	// 	{
+	// 		get { return true; }
+	// 	}
+	// 	public override bool CanWrite
+	// 	{
+	// 		get { return false; }
+	// 	}
+
+	// 	public override void WriteJson(JsonWriter writer, Agent value, Newtonsoft.Json.JsonSerializer serializer)
+	// 	{
+	// 		//Writes the code as the value for the object
+	// 		// writer.WriteValue(value);
+	// 		// serializer.Serialize(writer, Convert.ToInt32(value));
+	// 		writer.WriteStartObject();
+
+	// 		Type vType = value.GetType();
+	// 		MemberInfo[] properties = vType.GetProperties(BindingFlags.Public
+	// 											| BindingFlags.Instance);
+
+	// 		foreach (PropertyInfo property in properties)
+	// 		{
+	// 			object serValue = null;
+	// 			if (property.Name == "CurrentLocation")
+	// 			{
+	// 				LocationNode _location = (LocationNode)property.GetValue(value, null); //    Convert.ToInt32(property.GetValue(value, null));
+	// 				serValue = _location.Name;
+	// 			}
+	// 			else if(property.Name == "CurrentAction" ){
+	// 				LinkedList<Action> _actions = (LinkedList<Action>)property.GetValue(value, null);
+	// 				serValue = _actions.First.Value.Name;
+	// 			}
+	// 			else
+	// 			{
+	// 				serValue = property.GetValue(value, null);
+	// 			}
+	// 			writer.WritePropertyName(property.Name);
+	// 			serializer.Serialize(writer, serValue);
+	// 		}
+	// 		writer.WriteEndObject();
+	// 	}
+
+	// 	public override Agent Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+	// 	{
+	// 		throw new NotImplementedException();
+	// 	}
+
+	// 	public override void Write(Utf8JsonWriter writer, Agent value, JsonSerializerOptions options)
+	// 	{
+	// 		throw new NotImplementedException();
+	// 	}
+	// }
 }

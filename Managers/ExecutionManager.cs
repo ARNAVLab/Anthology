@@ -72,7 +72,7 @@ namespace Anthology.Models
             bool movement = false;
 			if (agent.CurrentAction.First.Value.Name == "travel_action" && agent.Destination.Count > 0) {
 				movement = true;
-				agent.MoveCloserToDestination();
+				ActionManager.MoveCloserToDestination(agent);
 			}
 
             if (agent.OccupiedCounter > 0)
@@ -83,7 +83,7 @@ namespace Anthology.Models
             else
             {
                 ActionManager.ExecuteAction(agent);
-                if (!AgentManager.IsContent(agent))
+                if (!agent.Motives.IsContent())
                 {
                     if (agent.CurrentAction.Count == 0)
                     {

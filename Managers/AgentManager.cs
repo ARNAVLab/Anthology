@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Anthology.Models
@@ -62,30 +63,6 @@ namespace Anthology.Models
             
         }
 
-		/// <summary>
-        /// Returns whether the agent is content, ie. checks to see if an agent has the maximum motives.
-        /// </summary>
-        /// <returns>True if all motives are at max.</returns>
-        public static bool IsContent(Agent agent)
-        {
-            foreach (float m in agent.Motives.Values)
-            {
-                if (m < Motive.MAX) return false;
-            }
-            return true;
-        }
-
-        /// <summary>
-        /// Decrements all the motives of this agent.
-        /// </summary>
-        public static void DecrementMotives(Agent agent)
-        {
-            foreach(string m in agent.Motives.Keys)
-            {
-                agent.Motives[m] = Math.Clamp(agent.Motives[m] - 1, Motive.MIN, Motive.MAX);
-            }
-        }
-
         /// <summary>
         /// Checks whether the agent satisfies the motive requirement for an action.
         /// </summary>
@@ -94,47 +71,9 @@ namespace Anthology.Models
         /// <returns>True if agent satisfies all requirements for an action.</returns>
         public static bool AgentSatisfiesMotiveRequirement(Agent agent, List<RMotive> reqs)
         {
-            foreach (RMotive r in reqs)
-            {
-                string t = r.MotiveType;
-                float c = r.Threshold;
-                switch (r.Operation)
-                {
-                    case BinOps.EQUALS:
-                        if (!(agent.Motives[t] == c))
-                        {
-                            return false;
-                        }
-                        break;
-                    case BinOps.LESS:
-                        if (!(agent.Motives[t] < c))
-                        {
-                            return false;
-                        }
-                        break;
-                    case BinOps.GREATER:
-                        if (!(agent.Motives[t] > c))
-                        {
-                            return false;
-                        }
-                        break;
-                    case BinOps.LESS_EQUALS:
-                        if (!(agent.Motives[t] <= c))
-                        {
-                            return false;
-                        }
-                        break;
-                    case BinOps.GREATER_EQUALS:
-                        if (!(agent.Motives[t] >= c))
-                        {
-                            return false;
-                        }
-                        break;
-                    default:
-                        Console.WriteLine("ERROR - JSON BinOp specification mistake for Motive Requirement for action");
-                        return false;
-                }
-            }
+            foreach (RMotive motiveReq in reqs)
+            	if (!agent.Motives.checkReqThreshold(motiveReq)) return false;
+            
             return true;
         }
 
@@ -145,11 +84,8 @@ namespace Anthology.Models
         /// <returns>True if all agents are content.</returns>
         public static bool AllAgentsContent()
         {
-            foreach (Agent agent in Agents)
-            {
-                if (!IsContent(agent)) return false;
-            }
-            return true;
+			if (Agents.Any( agent => !agent.Motives.IsContent())) return false;
+			return true;
         }
     }
 }
