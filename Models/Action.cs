@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Text.Json;
 using System.Text.Json.Serialization;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Serialization;
-using JsonConverter = Newtonsoft.Json.JsonConverter;
-using JsonConverterAttribute = Newtonsoft.Json.JsonConverterAttribute;
 using JsonIgnoreAttribute = Newtonsoft.Json.JsonIgnoreAttribute;
 
 
@@ -15,7 +14,6 @@ namespace Anthology.Models
     /// Action class all actions should inherit from.
     /// All actions have at least a name, requirements, and minimum time taken.
     /// </summary>
-    // [JsonConverter(typeof(ActionConverter))]
 	public class Action
     {
         /// <summary>
@@ -45,89 +43,84 @@ namespace Anthology.Models
 		/// <summary>
         /// List of resulting changes to the motives of the agent that occur after this action is executed.
         /// </summary>
-        [JsonPropertyOrder(1)][JsonPropertyName("Effects")]
-        public EffectContainer Effects { get; set; } = new(); 
+        [JsonPropertyName("Effects")]  // [JsonConverter(typeof(EffectsConverter))]
+		public EffectContainer Effects {get; set;} = new();
     }
 
-	/// <summary>
-    /// List of values that determine who the target effects of an action (if applicable), are applied to.
-    /// This roughly mirrors the parameters of the people requirement.
-    /// </summary>
-    // public static class TargetType
-    // {
-    //     /// <summary>
-    //     /// All agents present when the action is started (ie. at the action's associated location when the
-    //     /// agent begins to perform it) receive the target effects.
-    //     /// This target type could be used for an agent making a public speech.
-    //     /// </summary>
-    //     public const string ALL = "all";
+	// public class EffectsConverter : Newtonsoft.Json.JsonConverter<EffectContainer> {
+	// public class EffectsConverter : System.Text.Json.Serialization.JsonConverter<EffectContainer> {
+	// 	// private readonly Dictionary<string, Location> _locationDictionary = new();
+	// 	private readonly EffectContainer _effectContainer = new();
 
-    //     /// <summary>
-    //     /// Only agents who are present when the action is started (ie. at the action's associated location 
-    //     /// when the agent begins to perform it) and who fit the SpecificPeoplePresent criteria of the people
-    //     /// requirement receive the target effects.
-    //     /// This is used for actions that only apply to a certain few people.
-    //     /// </summary>
-    //     public const string SPECIFIC = "specific";
+	// 	public EffectsConverter()
+	// 	{
+	// 	}
 
-    //     /// <summary>
-    //     /// A single, random agent who is present when the action is started (ie. at the action's associated 
-    //     /// location when the agent begins to perform it) and who fits the SpecificPeoplePresent criteria of the
-    //     /// people requirement receives the target effects.
-    //     /// This could be used for an action that has one agent chat with a single friend out of a few specific options.
-    //     /// </summary>
-    //     public const string SPECIFIC_SINGLE = "specific_single";
+	// 	public EffectsConverter(EffectContainer effectContainer)
+	// 	{
+	// 		_effectContainer = effectContainer;
+	// 	}
 
-    //     /// <summary>
-    //     /// A single, random agent who is present when the action is started (ie. at the action's associated
-    //     /// location when the agent begins to perform it) receives the target effects.
-    //     /// This can be used for an action such as asking a stranger for directions.
-    //     /// </summary>
-    //     public const string RANDOM_PRESENT = "random_present";
-    // }
+	// 	public override EffectContainer Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+	// 	{
+	// 		// JObject jObject = JObject.Load(reader);
+	// 		// JObject jObject = JObject.Parse(reader);
+	// 		if (reader.TokenType == JsonTokenType.Null)
+	// 		{
+	// 			return null;
+	// 		}
 
-    /// <summary>
-    /// Action or behavior to be executed by an agent (ex. sleep).
-    /// </summary>
-    // public class PrimaryAction : Action
-    // {
-    //     public string ActType { get; set; } = "Primary";
-    // }
+	// 		using var document = JsonDocument.ParseValue(ref reader);
 
-    // /// <summary>
-    // /// Action or Behavior to be executed by an agent (ex. go to dinner).
-    // /// </summary>
-    // public class ScheduleAction : Action
-    // {
-    //     public string ActType { get; set; } = "Scheduled";
 
-	// 	/// <summary>
-    //     /// Optional flag to be set if this action is performed immediately rather than scheduled for later.
-    //     /// </summary>
-    //     public bool Interrupt = false;
+	// 		JObject jObjMotives = (JObject)jObject["Motives"];
+	// 		JObject jObjRelationships = (JObject)jObject["Relationships"];
 
-    //     /// <summary>
-    //     /// Primary action that will be performed by the instigator of this action.
-    //     /// </summary>
-    //     // [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    //     public string InstigatorAction { get; set; } = string.Empty;
+	// 		EffectContainer effectContainer = new();
+			
+	// 		foreach (var _motive in jObjMotives){
+	// 			MotiveEffect motiveEffect = Newtonsoft.Json.JsonConvert.DeserializeObject<MotiveEffect>(_motive.ToString());
+	// 			effectContainer.Motives.Add(motiveEffect);
+	// 		}
 
-    //     /// <summary>
-    //     /// Primary action that will be performed by the target of this action.
-    //     /// </summary>
-    //     // [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    //     public string TargetAction { get; set; } = string.Empty;
+	// 		foreach (var _motive in jObjRelationships)
+	// 		{
+	// 			RelationshipEffect motiveEffect = Newtonsoft.Json.JsonConvert.DeserializeObject<RelationshipEffect>(_motive.ToString());	
+	// 			effectContainer.Relationships.Add(motiveEffect);
+	// 		}
+	// 		return effectContainer;
+	// 	}
 
-    //     /// <summary>
-    //     /// The method of choosing which agent(s) will be the target of this action.
-    //     /// NOTE: some target methods require the action to have a people requirement to function properly.
-    //     /// </summary>
-    //     // [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    //     public string Target { get; set; } = string.Empty;
+	// 	// public override EffectContainer ReadJSON(ref Newtonsoft.Json.JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+	// 	// public override EffectContainer ReadJson(Newtonsoft.Json.JsonReader reader, Type objectType, EffectContainer existingValue, bool hasExistingValue, Newtonsoft.Json.JsonSerializer serializer)
+	// 	// {
+	// 	// 	JObject jObject = JObject.Load(reader);
+	// 	// 	JObject jObjMotives = (JObject)jObject["Motives"];
+	// 	// 	JObject jObjRelationships = (JObject)jObject["Relationships"];
 
-	// 	/// <summary>
-    //     /// List of current targets for the this action.
-    //     /// </summary>
-    //     public List<Agent> CurrentTargets { get; set; } = new();
-    // }
+	// 	// 	EffectContainer effectContainer = new();
+			
+	// 	// 	foreach (var _motive in jObjMotives){
+	// 	// 		MotiveEffect motiveEffect = Newtonsoft.Json.JsonConvert.DeserializeObject<MotiveEffect>(_motive.ToString());
+	// 	// 		effectContainer.Motives.Add(motiveEffect);
+	// 	// 	}
+
+	// 	// 	foreach (var _motive in jObjRelationships)
+	// 	// 	{
+	// 	// 		RelationshipEffect motiveEffect = Newtonsoft.Json.JsonConvert.DeserializeObject<RelationshipEffect>(_motive.ToString());	
+	// 	// 		effectContainer.Relationships.Add(motiveEffect);
+	// 	// 	}
+	// 	// 	return effectContainer;
+	// 	// }
+
+	// 	public override void Write(Utf8JsonWriter writer, EffectContainer value, JsonSerializerOptions options)
+	// 	{
+	// 		throw new NotImplementedException();
+	// 	}
+
+	// 	public override void WriteJson(Newtonsoft.Json.JsonWriter writer, EffectContainer value, Newtonsoft.Json.JsonSerializer serializer)
+	// 	{
+	// 		throw new NotImplementedException();
+	// 	}
+	// }
 }

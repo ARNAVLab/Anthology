@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Anthology.Models
 {
@@ -71,21 +72,7 @@ namespace Anthology.Models
         /// <returns>How much to affect motive by.</returns>
         public static float GetEffectDeltaForAgentAction(Agent agent, Action action)
         {
-            float deltaUtility = 0f;
-
-			foreach (MotiveEffect motiveEffect in action.Effects.Motives) {
-				float delta = motiveEffect.Delta;
-				float current = (float)agent.Motives[motiveEffect.MotiveType];
-				deltaUtility += Math.Clamp(delta + current, Motive.MIN, Motive.MAX) - current;
-			}
-
-			foreach (RelationshipEffect relationshipEffect in action.Effects.Relationships) {
-				// string RelType {get; set;} = string.Empty;
-				// public Agent With {get; set;} = new();
-				// public float ValenceDelta {get; set;} = 0;
-				throw new NotImplementedException();
-			}
-			return deltaUtility;
+			return action.Effects.GetEffectDeltaForEffects(agent);
         }
 
 		/// <summary>
@@ -137,46 +124,15 @@ namespace Anthology.Models
         /// Applies the effect of an action to this agent.
         /// </summary>
         public static void ExecuteAction(Agent agent) {
-            agent.Destination = new();
+			agent.Destination = new();
             agent.OccupiedCounter = 0;
 
 			// Execute the first action queued up
-            if (agent.CurrentAction.Count > 0)
-            {
-                Action action = agent.CurrentAction.First.Value;
-                agent.CurrentAction.RemoveFirst();
-
-				foreach (MotiveEffect motiveEffect in action.Effects.Motives) {
-					agent.Motives[motiveEffect.MotiveType] = (float)agent.Motives[motiveEffect.MotiveType] + motiveEffect.Delta;
-				}
-
-				foreach (RelationshipEffect motiveEffect in action.Effects.Relationships) {
-					throw new NotImplementedException();
-				}
-                // }
-                // else if (action is ScheduleAction sAction)
-                // {
-                //     if (sAction.Interrupt)
-                //     {
-                //         agent.CurrentAction.AddFirst(ActionManager.GetActionByName(sAction.InstigatorAction));
-                //     }
-                //     else
-                //     {
-                //         agent.CurrentAction.AddLast(ActionManager.GetActionByName(sAction.InstigatorAction));
-                //     }
-                //     foreach(Agent target in action.CurrentTargets)
-                //     {
-                //         if (sAction.Interrupt)
-                //         {
-                //             target.CurrentAction.AddFirst(ActionManager.GetActionByName(sAction.TargetAction));
-                //         }
-                //         else
-                //         {
-                //             target.CurrentAction.AddLast(ActionManager.GetActionByName(sAction.TargetAction));
-                //         }
-                //     }
-                // }
-            }
+			Action action = agent.CurrentAction.First.Value;
+			action.Effects.ApplyActionEffects(agent);
+			agent.CurrentAction.RemoveFirst();
+			
+            
         }
 
 		/// <summary>

@@ -82,6 +82,7 @@ namespace Anthology.Models
             else
             {
                 ActionManager.ExecuteAction(agent);
+				
                 if (!agent.Motives.IsContent())
                 {
                     if (agent.CurrentAction.Count == 0)

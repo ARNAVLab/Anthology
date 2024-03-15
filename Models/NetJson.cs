@@ -8,7 +8,9 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 using Amazon.Runtime.Internal.Util;
-using System.Diagnostics;
+using UnityEngine;
+using Unity.Jobs;
+// using System.Diagnostics;
 
 namespace Anthology.Models
 {
@@ -23,8 +25,8 @@ namespace Anthology.Models
         public static JsonSerializerOptions Jso { get; } = new()
         {
             Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-            WriteIndented = true
-			// JsonSerializerOptions.Converters.Add(new AgentJSONConverter())
+            WriteIndented = true,
+			// Converters = { new EffectsConverter() },
         };
 
         /// <summary>
@@ -48,17 +50,39 @@ namespace Anthology.Models
         public override void LoadActionsFromFile(string path) 
         {
 			string actionsText = File.ReadAllText(path);
+			// List<Action> sActions = JsonSerializer.Deserialize<List<Action>>(actionsText, Jso);
+			// //  JsonConvert.DeserializeObject<List<Action>>(File.ReadAllText(path), Jso);
+			
+			// foreach (Action actionObj in sActions){
+			// 	if (actionObj== null) return;	
+			// 	ActionManager.Actions[actionObj.Name] = actionObj;
+			// }
 			List<Action> sActions = JsonSerializer.Deserialize<List<Action>>(actionsText, Jso);
 			foreach (Action deserialized_action in sActions)
             {
                 ActionManager.Actions[deserialized_action.Name] = deserialized_action;
             }
+			
+
+			// 
+
+			
+
+			// foreach (Action deserialized_action in sActions)
+            // {
+            //     ActionManager.Actions[deserialized_action.Name] = deserialized_action;
+			// 	Debug.Log(deserialized_action.Name + " Deserializing...");
+			// 	foreach (MotiveEffect eachEffect in deserialized_action.Effects.Motives){
+			// 		Debug.Log(deserialized_action.Name + " | " + eachEffect.MotiveType);
+			// 	}
+				
+            // }
 
             // string actionsText = File.ReadAllText(path);
             // ActionContainer actions = JsonSerializer.Deserialize<ActionContainer>(actionsText, Jso);
             // if (actions == null) return;
             // ActionManager.Actions = actions;
-        }
+		}
 
         /// <summary>
         /// Serializes all actions and formats them to a string.
@@ -106,6 +130,7 @@ namespace Anthology.Models
         public override void LoadLocationsFromFile(string path) 
         {
             string locationsText = File.ReadAllText(path);
+
             IEnumerable<LocationNode> locationNodes = JsonSerializer.Deserialize<IEnumerable<LocationNode>>(locationsText, Jso);
 
             if (locationNodes == null) return;
@@ -124,82 +149,4 @@ namespace Anthology.Models
             return JsonSerializer.Serialize(LocationManager.LocationsByName.Values, Jso);
         }
     }
-	// public class AgentJSONConverter : System.Text.Json.Serialization.JsonConverter<Agent>
-	// {
-	// 	// Overrides the JSONConverter for Agent, and assigns the correct location instance to CurrentLocation
-	// 	public override Agent ReadJson(Newtonsoft.Json.JsonReader reader, Type objectType, Agent existingValue, bool hasExistingValue, Newtonsoft.Json.JsonSerializer serializer){
-	// 	// public override Agent Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-	// 		JObject jObject = JObject.Load(reader);
-
-	// 		string currLocName = jObject["CurrentLocation"].ToObject<string>();
-	// 		Action _action = null; 
-
-	// 		if (jObject["CurrentAction"] != null && (string)jObject["CurrentAction"] != "wait_action"){
-	// 			string currActionName = jObject["CurrentAction"].ToObject<string>();
-	// 			_action = ActionManager.GetActionByName(currActionName);
-	// 		}
-	// 		else{
-	// 			_action = ActionManager.GetActionByName("wait_action");
-	// 		}
-	// 		LocationNode _currentLocation = LocationManager.LocationsByName[currLocName];
-
-	// 		Agent agent = (Agent)base.ReadJson(jObject.CreateReader(), objectType, existingValue, serializer);
-	// 		agent.CurrentLocation = _currentLocation;
-	// 		agent.CurrentAction.AddFirst(_action);
-			
-	// 		return agent;
-	// 	}
-
-	// 	public override bool CanRead
-	// 	{
-	// 		get { return true; }
-	// 	}
-	// 	public override bool CanWrite
-	// 	{
-	// 		get { return false; }
-	// 	}
-
-	// 	public override void WriteJson(JsonWriter writer, Agent value, Newtonsoft.Json.JsonSerializer serializer)
-	// 	{
-	// 		//Writes the code as the value for the object
-	// 		// writer.WriteValue(value);
-	// 		// serializer.Serialize(writer, Convert.ToInt32(value));
-	// 		writer.WriteStartObject();
-
-	// 		Type vType = value.GetType();
-	// 		MemberInfo[] properties = vType.GetProperties(BindingFlags.Public
-	// 											| BindingFlags.Instance);
-
-	// 		foreach (PropertyInfo property in properties)
-	// 		{
-	// 			object serValue = null;
-	// 			if (property.Name == "CurrentLocation")
-	// 			{
-	// 				LocationNode _location = (LocationNode)property.GetValue(value, null); //    Convert.ToInt32(property.GetValue(value, null));
-	// 				serValue = _location.Name;
-	// 			}
-	// 			else if(property.Name == "CurrentAction" ){
-	// 				LinkedList<Action> _actions = (LinkedList<Action>)property.GetValue(value, null);
-	// 				serValue = _actions.First.Value.Name;
-	// 			}
-	// 			else
-	// 			{
-	// 				serValue = property.GetValue(value, null);
-	// 			}
-	// 			writer.WritePropertyName(property.Name);
-	// 			serializer.Serialize(writer, serValue);
-	// 		}
-	// 		writer.WriteEndObject();
-	// 	}
-
-	// 	public override Agent Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-	// 	{
-	// 		throw new NotImplementedException();
-	// 	}
-
-	// 	public override void Write(Utf8JsonWriter writer, Agent value, JsonSerializerOptions options)
-	// 	{
-	// 		throw new NotImplementedException();
-	// 	}
-	// }
 }
