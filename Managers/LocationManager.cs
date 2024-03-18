@@ -9,6 +9,7 @@ using Jint.Parser;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Rendering.VirtualTexturing;
+using Random = System.Random;
 using Vector2 = System.Numerics.Vector2;
 
 namespace Anthology.Models
@@ -37,6 +38,8 @@ namespace Anthology.Models
         /// The total number of locations in the simulation.
         /// </summary>
         public static int LocationCount { get; set; } = 0;
+
+		private static Random rand = new Random();
 
 		public static MKDictionary<LocationNode, LocationNode, List<LocationNode>> DiscoveredPaths { get; set; } = new MKDictionary<LocationNode, LocationNode, List<LocationNode>>();
 
@@ -73,6 +76,11 @@ namespace Anthology.Models
 			DistanceMatrix = new();
             LocationCount = 0;
         }
+
+		public static LocationNode GetRandomLocation(){
+			LocationNode location = LocationsByName.ElementAt(rand.Next(0, LocationsByName.Count)).Value;
+			return location;
+		}
 
         /// <summary>
         /// Adds a location accordingly to each location data structure.

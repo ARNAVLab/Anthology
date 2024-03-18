@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using UnityEngine;
 
 namespace Anthology.Models
 {
@@ -31,7 +32,6 @@ namespace Anthology.Models
 					foreach (Agent agent in AgentManager.Agents) {
 						Turn(agent);
 					}
-
 					
                     // Parallel.ForEach(AgentManager.Agents, agent =>
                     // {
@@ -69,30 +69,29 @@ namespace Anthology.Models
         public static bool Turn(Agent agent)
         {
             bool movement = false;
-/*            Console.WriteLine(agent.Name);*/
+			if (agent.CurrentAction.First.Value.Name == "travel_action" && agent.Destination.Count > 0) {
+				movement = true;
+				ActionManager.MoveCloserToDestination(agent);
+			}
+
             if (agent.OccupiedCounter > 0)
             {
-                agent.OccupiedCounter--;
-
-                if (agent.CurrentAction.First.Value.Name == "travel_action" && agent.Destination.Count > 0)
-                {
-                    movement = true;
-                    agent.MoveCloserToDestination();
-                }
+                agent.OccupiedCounter--;                
             }
             // If not travelling (i.e. arrived at destination), and end of occupied, execute planned action effects, select/start next.
             else
             {
-                agent.ExecuteAction();
-                if (!agent.IsContent())
+                ActionManager.ExecuteAction(agent);
+				
+                if (!agent.Motives.IsContent())
                 {
                     if (agent.CurrentAction.Count == 0)
                     {
-                        agent.SelectNextAction();
+                        ActionManager.SelectNextAction(agent);
                     }
                     else
                     {
-                        agent.StartAction();
+                        ActionManager.StartAction(agent);
                     }
                 }
             }

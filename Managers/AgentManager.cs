@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Anthology.Models
@@ -43,7 +44,7 @@ namespace Anthology.Models
         public static void AddAgent(Agent agent)
         {
             Agents.Add(agent);
-			agent.EnterLocation(agent.CurrentLocation);
+			// agent.EnterLocation(agent.CurrentLocation);
         }
 
         /// <summary>
@@ -70,47 +71,9 @@ namespace Anthology.Models
         /// <returns>True if agent satisfies all requirements for an action.</returns>
         public static bool AgentSatisfiesMotiveRequirement(Agent agent, List<RMotive> reqs)
         {
-            foreach (RMotive r in reqs)
-            {
-                string t = r.MotiveType;
-                float c = r.Threshold;
-                switch (r.Operation)
-                {
-                    case BinOps.EQUALS:
-                        if (!(agent.Motives[t] == c))
-                        {
-                            return false;
-                        }
-                        break;
-                    case BinOps.LESS:
-                        if (!(agent.Motives[t] < c))
-                        {
-                            return false;
-                        }
-                        break;
-                    case BinOps.GREATER:
-                        if (!(agent.Motives[t] > c))
-                        {
-                            return false;
-                        }
-                        break;
-                    case BinOps.LESS_EQUALS:
-                        if (!(agent.Motives[t] <= c))
-                        {
-                            return false;
-                        }
-                        break;
-                    case BinOps.GREATER_EQUALS:
-                        if (!(agent.Motives[t] >= c))
-                        {
-                            return false;
-                        }
-                        break;
-                    default:
-                        Console.WriteLine("ERROR - JSON BinOp specification mistake for Motive Requirement for action");
-                        return false;
-                }
-            }
+            foreach (RMotive motiveReq in reqs)
+            	if (!agent.Motives.checkReqThreshold(motiveReq)) return false;
+            
             return true;
         }
 
@@ -121,27 +84,8 @@ namespace Anthology.Models
         /// <returns>True if all agents are content.</returns>
         public static bool AllAgentsContent()
         {
-            foreach (Agent a in Agents)
-            {
-                if (!a.IsContent()) return false;
-            }
-            return true;
-        }
-
-        /// <summary>
-        /// Decrements the motives of every agent in the simulation.
-        /// </summary>
-        public static void DecrementMotives()
-        {
-			foreach (Agent agent in Agents)
-			{
-				agent.DecrementMotives();	
-			}
-			
-            // Parallel.ForEach(Agents, a =>
-            // {
-            //     a.DecrementMotives();
-            // });
+			if (Agents.Any( agent => !agent.Motives.IsContent())) return false;
+			return true;
         }
     }
 }

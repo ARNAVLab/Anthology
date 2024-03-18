@@ -1,7 +1,16 @@
 using System;
+using System.Reflection;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
+using Jint.Parser;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using JsonSerializer = System.Text.Json.JsonSerializer;
+using Amazon.Runtime.Internal.Util;
+using UnityEngine;
+using Unity.Jobs;
+// using System.Diagnostics;
 
 namespace Anthology.Models
 {
@@ -16,7 +25,8 @@ namespace Anthology.Models
         public static JsonSerializerOptions Jso { get; } = new()
         {
             Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-            WriteIndented = true
+            WriteIndented = true,
+			// Converters = { new EffectsConverter() },
         };
 
         /// <summary>
@@ -39,11 +49,13 @@ namespace Anthology.Models
         /// <param name="path">Path to JSON file containing all actions.</param>
         public override void LoadActionsFromFile(string path) 
         {
-            string actionsText = File.ReadAllText(path);
-            ActionContainer actions = JsonSerializer.Deserialize<ActionContainer>(actionsText, Jso);
-            if (actions == null) return;
-            ActionManager.Actions = actions;
-        }
+			string actionsText = File.ReadAllText(path);
+			List<Action> sActions = JsonSerializer.Deserialize<List<Action>>(actionsText, Jso);
+			foreach (Action deserialized_action in sActions)
+            {
+                ActionManager.Actions[deserialized_action.Name] = deserialized_action;
+            }
+		}
 
         /// <summary>
         /// Serializes all actions and formats them to a string.
@@ -60,13 +72,12 @@ namespace Anthology.Models
         /// <param name="path">Path of JSON file to load agents from.</param>
         public override void LoadAgentsFromFile(string path) 
         {
-            string agentsText = File.ReadAllText(path);
-            List<SerializableAgent> sAgents = JsonSerializer.Deserialize<List<SerializableAgent>>(agentsText, Jso);
-
-            if (sAgents == null) return;
-            foreach (SerializableAgent s in sAgents)
+			string agentsText = File.ReadAllText(path);
+			List<Agent> sAgents = JsonSerializer.Deserialize<List<Agent>>(agentsText, Jso);
+			foreach (Agent deserialized_agent in sAgents)
             {
-                AgentManager.Agents.Add(SerializableAgent.DeserializeToAgent(s));
+				deserialized_agent.CurrentAction.AddFirst(ActionManager.GetActionByName("wait_action"));
+                AgentManager.Agents.Add(deserialized_agent);
             }
         }
 
@@ -76,13 +87,13 @@ namespace Anthology.Models
         /// <returns>String representation of all serialized agents.</returns>
         public override string SerializeAllAgents()
         {
-            List<SerializableAgent> sAgents = new();
-            foreach(Agent a in AgentManager.Agents)
-            {
-                sAgents.Add(SerializableAgent.SerializeAgent(a));
-            }
+            // List<SerializableAgent> sAgents = new();
+            // foreach(Agent a in AgentManager.Agents)
+            // {
+            //     sAgents.Add(SerializableAgent.SerializeAgent(a));
+            // }
 
-            return JsonSerializer.Serialize(sAgents, Jso);
+            return JsonSerializer.Serialize(AgentManager.Agents, Jso);
         }
 
         /// <summary>
@@ -92,6 +103,7 @@ namespace Anthology.Models
         public override void LoadLocationsFromFile(string path) 
         {
             string locationsText = File.ReadAllText(path);
+
             IEnumerable<LocationNode> locationNodes = JsonSerializer.Deserialize<IEnumerable<LocationNode>>(locationsText, Jso);
 
             if (locationNodes == null) return;
