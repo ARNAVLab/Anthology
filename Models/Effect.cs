@@ -112,7 +112,6 @@ namespace Anthology.Models
 
 		public void ApplyActionEffects(Agent agent){	
 			foreach (MotiveEffect motiveEffect in Motives) {
-				UnityEngine.Debug.Log("MotiveType:" + motiveEffect.MotiveType + " | " + "Delta:"+motiveEffect.Delta);
 				if(motiveEffect.MotiveType != "")
 					agent.Motives[motiveEffect.MotiveType] = (float)agent.Motives[motiveEffect.MotiveType] + motiveEffect.Delta;
 			}
