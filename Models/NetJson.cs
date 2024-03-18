@@ -50,38 +50,11 @@ namespace Anthology.Models
         public override void LoadActionsFromFile(string path) 
         {
 			string actionsText = File.ReadAllText(path);
-			// List<Action> sActions = JsonSerializer.Deserialize<List<Action>>(actionsText, Jso);
-			// //  JsonConvert.DeserializeObject<List<Action>>(File.ReadAllText(path), Jso);
-			
-			// foreach (Action actionObj in sActions){
-			// 	if (actionObj== null) return;	
-			// 	ActionManager.Actions[actionObj.Name] = actionObj;
-			// }
 			List<Action> sActions = JsonSerializer.Deserialize<List<Action>>(actionsText, Jso);
 			foreach (Action deserialized_action in sActions)
             {
                 ActionManager.Actions[deserialized_action.Name] = deserialized_action;
             }
-			
-
-			// 
-
-			
-
-			// foreach (Action deserialized_action in sActions)
-            // {
-            //     ActionManager.Actions[deserialized_action.Name] = deserialized_action;
-			// 	Debug.Log(deserialized_action.Name + " Deserializing...");
-			// 	foreach (MotiveEffect eachEffect in deserialized_action.Effects.Motives){
-			// 		Debug.Log(deserialized_action.Name + " | " + eachEffect.MotiveType);
-			// 	}
-				
-            // }
-
-            // string actionsText = File.ReadAllText(path);
-            // ActionContainer actions = JsonSerializer.Deserialize<ActionContainer>(actionsText, Jso);
-            // if (actions == null) return;
-            // ActionManager.Actions = actions;
 		}
 
         /// <summary>

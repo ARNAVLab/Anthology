@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Text.Json.Serialization;
 using UnityEngine;
+using Random = System.Random;
 
 namespace Anthology.Models
 {
@@ -10,15 +11,17 @@ namespace Anthology.Models
 		/// <summary>
         /// The maximum value of a motive.
         /// </summary>
-        public const float MAX = 5f;
+        public const int MAX = 5;
 
         /// <summary>
         /// The minimum value of a motive.
         /// </summary>
-        public const float MIN = 1f;
+        public const int MIN = 1;
+
+		private static Random random = new Random();
 
 		// Motives we're currently allowing the agents to have 
-		private float _accomplishment = 0;
+		private float _accomplishment = random.Next(MIN,MAX);
 		
 		[JsonPropertyName("accomplishment")]
 		public float Accomplishment { 
@@ -28,7 +31,7 @@ namespace Anthology.Models
 			}
 		}
 
-		private float _emotional = 0;
+		private float _emotional = random.Next(MIN,MAX);
 
 		[JsonPropertyName("emotional")]
 		public float Emotional { 
@@ -38,7 +41,7 @@ namespace Anthology.Models
 			}
 		}
 
-		private float _financial = 0;
+		private float _financial = random.Next(MIN,MAX);
 
 		[JsonPropertyName("financial")]
 		public float Financial { 
@@ -48,7 +51,7 @@ namespace Anthology.Models
 			}
 		}
 
-		private float _social = 0;
+		private float _social = random.Next(MIN,MAX);
 
 		[JsonPropertyName("social")]
 		public float Social { 
@@ -58,7 +61,7 @@ namespace Anthology.Models
 			}
 		}
  
-		private float _physical = 0;
+		private float _physical = random.Next(MIN,MAX);
 
 		[JsonPropertyName("physical")]
 		public float Physical { 

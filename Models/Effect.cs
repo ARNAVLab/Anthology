@@ -61,18 +61,22 @@ namespace Anthology.Models
         /// </summary>
         public override string On => "Relationship";
 
+		[JsonPropertyName("RelationshipType")]
 		public string RelType {get; set;} = string.Empty;
 
-		[JsonPropertyName("ValenceDelta")]
+		[JsonPropertyName("Delta")]
 		public float ValenceDelta {get; set;} = 0;
 
-		public RelationshipEffect(){
-			throw new NotImplementedException("Not implemented Relationship Effects yet");
-		}
+		public List<Agent> targets = new();
 
 		public override float GetEffectDeltaForEffect(Agent agent)
 		{
 			throw new NotImplementedException();
+			// if (RelationshipType == "")
+			// 	return 0; 
+			
+			// float current = (float)agent.Motives[RelationshipType];
+			// return Math.Clamp(ValenceDelta + current, Motive.MIN, Motive.MAX) - current;
 		}
 	}
 
@@ -87,9 +91,8 @@ namespace Anthology.Models
 		public List<MotiveEffect> Motives {get; set;} = new();
 		
 		/// <summary>
-		/// List of all the effects on the agents motive executing this action will have
+		/// List of all the effects on the agents relationships executing this action will have
 		/// </summary> <summary>
-		
 		[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)][JsonPropertyName("RelationshipEffects")]
 		public List<RelationshipEffect> Relationships {get; set;} = new();
 

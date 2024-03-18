@@ -33,8 +33,7 @@ namespace Anthology.Models
         /// The current location of this agent 
 		/// 	The property ensures we record the movement and update the GUI accordingly.
         /// </summary>
-		private LocationNode _currentLocation = new();
-
+		private LocationNode _currentLocation = LocationManager.GetRandomLocation();
 
 		[JsonPropertyName("AtLocation")]
 		public string AtLocation {
@@ -60,7 +59,7 @@ namespace Anthology.Models
         /// <summary>
         /// How long the agent will be occupied with the current action they are executing.
         /// </summary>
-        public int OccupiedCounter { get; set; }
+        public int OccupiedCounter { get; set; } = 0;
 
 		/// <summary>
 		/// Is true if the agent is currently moving
