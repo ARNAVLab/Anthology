@@ -178,12 +178,14 @@ namespace Anthology.Models
         /// <returns>Returns all the locations that satisfied the given requirement, or an empty enumerable if none match.</returns>
         public static List<LocationNode> LocationsSatisfyingLocationRequirement(RLocation requirements)
         {
+			List<LocationNode> default_value;
             List<LocationNode> matches = new();
             if (requirements.HasOneOrMoreOf.Count() > 0)
             {
                 foreach (string tag in requirements.HasOneOrMoreOf)
                 {
-                    matches.AddRange(LocationsByTag[tag]);
+					default_value = LocationsByTag.TryGetValue(tag, out var item) ? item : LocationsByTag[tag] = new();
+                    matches.AddRange(default_value);
                 }
             }
             else
@@ -194,14 +196,17 @@ namespace Anthology.Models
             {
                 foreach (string tag in requirements.HasAllOf)
                 {
-                    matches = matches.Intersect(LocationsByTag[tag]).ToList();
+					default_value = LocationsByTag.TryGetValue(tag, out var item) ? item : LocationsByTag[tag] = new();
+                    matches.Intersect(default_value).ToList();
+                    // matches = matches.Intersect(LocationsByTag[tag]).ToList();
                 }
             }
             if (requirements.HasNoneOf.Count() > 0)
             {
                 foreach (string tag in requirements.HasNoneOf)
                 {
-                    matches = matches.Except(LocationsByTag[tag]).ToList();
+					default_value = LocationsByTag.TryGetValue(tag, out var item) ? item : LocationsByTag[tag] = new();
+                    matches = matches.Except(default_value).ToList();
                 }
             }
             return matches;
