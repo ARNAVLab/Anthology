@@ -88,16 +88,27 @@ namespace Anthology.Models
         /// <param name="node">The location to add to the simulation.</param>
         public static void AddLocation(LocationNode node)
         {
-            LocationsByName.Add(node.Name, node);
-            LocationsByPosition.Add(new(node.X, node.Y), node);
-            node.ID = LocationCount++;
-
-            foreach (string tag in node.Tags)
-            {
-                if (!LocationsByTag.ContainsKey(tag))
-                    LocationsByTag.Add(tag, new());
-                LocationsByTag[tag].Add(node);
-            }
+			static string getNewLocName(LocationNode node){
+				return node.Name + ":" + node.X + "," + node.Y;
+			}
+			
+			if (!LocationsByPosition.ContainsKey(new(node.X, node.Y))){
+				if (LocationsByName.ContainsKey(node.Name)){
+					LocationsByName[node.Name].Name = getNewLocName(LocationsByName[node.Name]);
+					node.Name = getNewLocName(node);
+				}
+				LocationsByName.Add(node.Name, node);
+				LocationsByPosition.Add(new(node.X, node.Y), node);
+				node.ID = LocationCount++;
+				foreach (string tag in node.Tags)
+				{
+					if (!LocationsByTag.ContainsKey(tag))
+						LocationsByTag.Add(tag, new());
+					LocationsByTag[tag].Add(node);
+				}
+			}
+			
+            
         }
 
         /// <summary>
