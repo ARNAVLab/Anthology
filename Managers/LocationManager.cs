@@ -88,16 +88,27 @@ namespace Anthology.Models
         /// <param name="node">The location to add to the simulation.</param>
         public static void AddLocation(LocationNode node)
         {
-            LocationsByName.Add(node.Name, node);
-            LocationsByPosition.Add(new(node.X, node.Y), node);
-            node.ID = LocationCount++;
-
-            foreach (string tag in node.Tags)
-            {
-                if (!LocationsByTag.ContainsKey(tag))
-                    LocationsByTag.Add(tag, new());
-                LocationsByTag[tag].Add(node);
-            }
+			static string getNewLocName(LocationNode node){
+				return node.Name + ":" + node.X + "," + node.Y;
+			}
+			
+			if (!LocationsByPosition.ContainsKey(new(node.X, node.Y))){
+				if (LocationsByName.ContainsKey(node.Name)){
+					LocationsByName[node.Name].Name = getNewLocName(LocationsByName[node.Name]);
+					node.Name = getNewLocName(node);
+				}
+				LocationsByName.Add(node.Name, node);
+				LocationsByPosition.Add(new(node.X, node.Y), node);
+				node.ID = LocationCount++;
+				foreach (string tag in node.Tags)
+				{
+					if (!LocationsByTag.ContainsKey(tag))
+						LocationsByTag.Add(tag, new());
+					LocationsByTag[tag].Add(node);
+				}
+			}
+			
+            
         }
 
         /// <summary>
@@ -167,12 +178,14 @@ namespace Anthology.Models
         /// <returns>Returns all the locations that satisfied the given requirement, or an empty enumerable if none match.</returns>
         public static List<LocationNode> LocationsSatisfyingLocationRequirement(RLocation requirements)
         {
+			List<LocationNode> default_value;
             List<LocationNode> matches = new();
             if (requirements.HasOneOrMoreOf.Count() > 0)
             {
                 foreach (string tag in requirements.HasOneOrMoreOf)
                 {
-                    matches.AddRange(LocationsByTag[tag]);
+					default_value = LocationsByTag.TryGetValue(tag, out var item) ? item : LocationsByTag[tag] = new();
+                    matches.AddRange(default_value);
                 }
             }
             else
@@ -183,14 +196,17 @@ namespace Anthology.Models
             {
                 foreach (string tag in requirements.HasAllOf)
                 {
-                    matches = matches.Intersect(LocationsByTag[tag]).ToList();
+					default_value = LocationsByTag.TryGetValue(tag, out var item) ? item : LocationsByTag[tag] = new();
+                    matches.Intersect(default_value).ToList();
+                    // matches = matches.Intersect(LocationsByTag[tag]).ToList();
                 }
             }
             if (requirements.HasNoneOf.Count() > 0)
             {
                 foreach (string tag in requirements.HasNoneOf)
                 {
-                    matches = matches.Except(LocationsByTag[tag]).ToList();
+					default_value = LocationsByTag.TryGetValue(tag, out var item) ? item : LocationsByTag[tag] = new();
+                    matches = matches.Except(default_value).ToList();
                 }
             }
             return matches;
