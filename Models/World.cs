@@ -37,7 +37,7 @@
             Time += 1;
             if (Time % 1200 == 0)
             {
-                foreach (Agent agent in AgentManager.Agents)
+                foreach (Agent agent in AgentManager.Agents.Values)
                     if (!agent.Motives.IsContent()) agent.Motives.DecrementMotives();
             }
         }

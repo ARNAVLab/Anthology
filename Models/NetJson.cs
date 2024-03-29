@@ -10,6 +10,7 @@ using JsonSerializer = System.Text.Json.JsonSerializer;
 using Amazon.Runtime.Internal.Util;
 using UnityEngine;
 using Unity.Jobs;
+using System.Linq;
 // using System.Diagnostics;
 
 namespace Anthology.Models
@@ -77,7 +78,7 @@ namespace Anthology.Models
 			foreach (Agent deserialized_agent in sAgents)
             {
 				deserialized_agent.CurrentAction.AddFirst(ActionManager.GetActionByName("wait_action"));
-                AgentManager.Agents.Add(deserialized_agent);
+                AgentManager.AddAgent(deserialized_agent); //   .Agents.Add(deserialized_agent);
             }
         }
 
@@ -93,7 +94,7 @@ namespace Anthology.Models
             //     sAgents.Add(SerializableAgent.SerializeAgent(a));
             // }
 
-            return JsonSerializer.Serialize(AgentManager.Agents, Jso);
+            return JsonSerializer.Serialize(AgentManager.Agents.Values.ToList(), Jso);
         }
 
         /// <summary>

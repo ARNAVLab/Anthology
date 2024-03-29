@@ -13,7 +13,7 @@ namespace Anthology.Models
         /// <summary>
         /// Agents in the simulation.
         /// </summary>
-        public static List<Agent> Agents { get; set; } = new();
+        public static Dictionary<string, Agent> Agents { get; set; } = new();
 
         /// <summary>
         /// Initializes/resets all agent manager variables.
@@ -43,7 +43,7 @@ namespace Anthology.Models
         /// <param name="agent">The agent to add to the simulation</param>
         public static void AddAgent(Agent agent)
         {
-            Agents.Add(agent);
+            Agents[agent.Name] = agent;
 			// agent.EnterLocation(agent.CurrentLocation);
         }
 
@@ -54,13 +54,13 @@ namespace Anthology.Models
         /// <returns>Agent with given name.</returns>
         public static Agent GetAgentByName(string name)
         {
-            bool MatchName(Agent a)
-            {
-                return a.Name == name;
-            }
-            Agent? agent = Agents.Find(MatchName);
-			return agent ?? throw new ArgumentException("Agent with name: " + name + " does not exist.");
-            
+            // bool MatchName(Agent a)
+            // {
+            //     return a.Name == name;
+            // }
+            // Agent? agent = Agents.Find(MatchName);
+			// return agent ?? throw new ArgumentException("Agent with name: `" + name + "` does not exist.");
+            return (name!="" && Agents.ContainsKey(name))? Agents[name] : null;
         }
 
         /// <summary>
@@ -84,7 +84,7 @@ namespace Anthology.Models
         /// <returns>True if all agents are content.</returns>
         public static bool AllAgentsContent()
         {
-			if (Agents.Any( agent => !agent.Motives.IsContent())) return false;
+			if (Agents.Values.Any( agent => !agent.Motives.IsContent())) return false;
 			return true;
         }
     }

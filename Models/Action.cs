@@ -45,5 +45,17 @@ namespace Anthology.Models
         /// </summary>
         [JsonPropertyName("Effects")]  // [JsonConverter(typeof(EffectsConverter))]
 		public EffectContainer Effects {get; set;} = new();
+
+		// public Action _targetAction {get; set;} = new();
+
+		// [JsonPropertyName("TargetAction")]
+		// public string TargetAction {
+		// 	get => _targetAction.Name; 
+		// 	set {
+		// 		if (ActionManager.Actions.ContainsKey(value)){
+		// 			_targetAction = ActionManager.Actions[value];
+		// 		}
+		// 	}
+		// }
     }
 }
