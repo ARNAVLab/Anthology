@@ -178,38 +178,31 @@ namespace Anthology.Models
         /// <returns>Returns all the locations that satisfied the given requirement, or an empty enumerable if none match.</returns>
         public static List<LocationNode> LocationsSatisfyingLocationRequirement(RLocation requirements)
         {
-			List<LocationNode> default_value;
-            List<LocationNode> matches = new();
-            if (requirements.HasOneOrMoreOf.Count() > 0)
+			List<LocationNode> matches = new();
+			foreach(LocationNode location in LocationsByName.Values){
+				if (LocationSatisfiesLocationRequirement(location, requirements))
+					matches.Add(location);
+			}
+			return matches;
+        }
+
+		public static bool LocationSatisfiesLocationRequirement(LocationNode location, RLocation requirements)
+        {
+			if (requirements.HasOneOrMoreOf.Count() > 0 && !requirements.HasOneOrMoreOf.Any(tag => location.Tags.Contains(tag)))
             {
-                foreach (string tag in requirements.HasOneOrMoreOf)
-                {
-					default_value = LocationsByTag.TryGetValue(tag, out var item) ? item : LocationsByTag[tag] = new();
-                    matches.AddRange(default_value);
-                }
+				return false;
             }
-            else
+            
+			if (requirements.HasAllOf.Count() > 0 && !requirements.HasAllOf.All(tag => location.Tags.Contains(tag)))
             {
-                matches.AddRange(LocationsByName.Values);
+                return false;
             }
-            if (requirements.HasAllOf.Count() > 0)
+            
+			if (requirements.HasNoneOf.Count() > 0 && !requirements.HasNoneOf.All(tag => !location.Tags.Contains(tag)))
             {
-                foreach (string tag in requirements.HasAllOf)
-                {
-					default_value = LocationsByTag.TryGetValue(tag, out var item) ? item : LocationsByTag[tag] = new();
-                    matches.Intersect(default_value).ToList();
-                    // matches = matches.Intersect(LocationsByTag[tag]).ToList();
-                }
+                return false;
             }
-            if (requirements.HasNoneOf.Count() > 0)
-            {
-                foreach (string tag in requirements.HasNoneOf)
-                {
-					default_value = LocationsByTag.TryGetValue(tag, out var item) ? item : LocationsByTag[tag] = new();
-                    matches = matches.Except(default_value).ToList();
-                }
-            }
-            return matches;
+            return true;
         }
 
         /// <summary>
@@ -221,29 +214,38 @@ namespace Anthology.Models
         /// <param name="requirements">Requirements that locations must satisfy to be returned.</param>
         /// <param name="agent">Agent relevant for handling agent requirement(s).</param>
         /// <returns>Returns all the locations that satisfied the given requirement, or an empty enumerable if none match.</returns>
-        public static List<LocationNode> LocationsSatisfyingPeopleRequirement(IEnumerable<LocationNode> locations, RPeople requirements, string agent_name = "")
+        public static List<LocationNode> LocationsSatisfyingPeopleRequirement(IEnumerable<LocationNode> locations, RPeople rPeople, Agent agent=null)
         {
-			bool IsLocationValid(LocationNode location){
-                if (agent_name == "" || location.AgentsPresent.Contains(agent_name)) {
-                    return location.SatisfiesRequirements(requirements);
-                }
-                else {
-					// making sure the People requirements take the agent into account for the test
-                    location.AgentsPresent.Add(agent_name);
-                    bool valid = location.SatisfiesRequirements(requirements);
-                    location.AgentsPresent.Remove(agent_name);
-                    return valid;
-                }
-            }
-
             List<LocationNode> matches = new();
-            foreach (LocationNode location in locations)
-            {
-                if (IsLocationValid(location)) matches.Add(location);
+            foreach (LocationNode location in locations) {
+				if (LocationSatisfiesPeopleRequirement(agent, location, rPeople))
+					matches.Add(location);
             }
-
             return matches;
         }
+
+		internal static bool LocationSatisfiesPeopleRequirement(Agent agent, LocationNode location, RPeople rPeople)
+		{	
+			bool valid = false;
+			bool isLocationValid(){
+				return location.HasMinNumPeople(rPeople.MinNumPeople) && 
+						location.HasNotMaxNumPeople(rPeople.MaxNumPeople) && 
+						location.SpecificPeoplePresent(rPeople.SpecificPeoplePresent) && 
+						location.SpecificPeopleAbsent(rPeople.SpecificPeopleAbsent) && 
+						location.RelationshipsPresent(rPeople.RelationshipsPresent, agent) && 
+						location.RelationshipsAbsent(rPeople.RelationshipsPresent, agent);
+			}
+
+			if (agent.CurrentLocation == location){
+				valid = isLocationValid();
+			}
+			else{
+				location.AgentsPresent.Add(agent.Name);
+				valid = isLocationValid();
+				location.AgentsPresent.Remove(agent.Name);
+			}		
+			return valid;
+		}
 
         /// <summary>
         /// Finds the nearest location of a given set from a specified location.
@@ -328,6 +330,18 @@ namespace Anthology.Models
 				around.Add(_temp);
 			} 
 			if(LocationsByPosition.TryGetValue(new(x, y - 1), out _temp)){
+				around.Add(_temp);
+			} 
+			if(LocationsByPosition.TryGetValue(new(x - 1, y - 1), out _temp)){
+				around.Add(_temp);
+			} 
+			if(LocationsByPosition.TryGetValue(new(x + 1, y - 1), out _temp)){
+				around.Add(_temp);
+			} 
+			if(LocationsByPosition.TryGetValue(new(x - 1, y + 1), out _temp)){
+				around.Add(_temp);
+			} 
+			if(LocationsByPosition.TryGetValue(new(x + 1, y + 1), out _temp)){
 				around.Add(_temp);
 			} 
 			return around;

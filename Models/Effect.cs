@@ -104,7 +104,8 @@ namespace Anthology.Models
 			}
 			
 			foreach (RelationshipEffect relEffect in Relationships) {
-				throw new NotImplementedException();
+				// throw new NotImplementedException();
+				return 0;
 			}
 			
 			return deltaUtility;

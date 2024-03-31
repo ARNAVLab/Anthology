@@ -69,12 +69,14 @@ namespace Anthology.Models
         public static bool Turn(Agent agent)
         {
             bool movement = false;
-			if (agent.CurrentAction.First.Value.Name == "travel_action" && agent.Destination.Count > 0) {
+			
+			if (agent.CurrentAction.First.Value.Name == "travel_action") {
 				movement = true;
 				ActionManager.MoveCloserToDestination(agent);
+				return movement;
 			}
 
-            if (agent.OccupiedCounter > 0)
+			if (agent.OccupiedCounter > 0)
             {
                 agent.OccupiedCounter--;                
             }
@@ -82,20 +84,16 @@ namespace Anthology.Models
             else
             {
                 ActionManager.ExecuteAction(agent);
-				
-                if (!agent.Motives.IsContent())
-                {
-                    if (agent.CurrentAction.Count == 0)
-                    {
-                        ActionManager.SelectNextAction(agent);
-                    }
-                    else
-                    {
-                        ActionManager.StartAction(agent);
-                    }
-                }
-            }
-            return movement;
+                if (!agent.Motives.IsContent()){
+					if (agent.CurrentAction.Count == 0){
+						ActionManager.SelectNextAction(agent);
+					}
+					else {
+						ActionManager.StartAction(agent);
+					}
+				}
+	        }
+			return movement;
         }
 
         /// <summary>

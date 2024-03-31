@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json.Serialization;
 
 namespace Anthology.Models
@@ -78,13 +79,14 @@ namespace Anthology.Models
         /// </summary>
         /// <param name="reqs">Requirements to check for location.</param>
         /// <returns>True if location satisfies all requirements.</returns>
-        public bool SatisfiesRequirements(RPeople reqs)
+        public bool SatisfiesRequirements(RPeople reqs, Agent agent)
         {
             return HasMinNumPeople(reqs.MinNumPeople) &&
                    HasNotMaxNumPeople(reqs.MaxNumPeople) &&
                    SpecificPeoplePresent(reqs.SpecificPeoplePresent) &&
                    SpecificPeopleAbsent(reqs.SpecificPeopleAbsent) &&
-                   RelationshipsPresent(reqs.RelationshipsPresent);
+                   RelationshipsPresent(reqs.RelationshipsPresent, agent) && 
+				   RelationshipsAbsent(reqs.RelationshipsAbsent, agent);
         }
 
         /// <summary>
@@ -94,12 +96,10 @@ namespace Anthology.Models
         /// <returns>True if location has all tags given.</returns>
         private bool HasAllOf(IEnumerable<string> hasAllOf)
         {
-            IEnumerator<string> enumerator = hasAllOf.GetEnumerator();
-            while (enumerator.MoveNext())
-            {
-                if (!Tags.Contains(enumerator.Current)) return false;
-            }
-            return true;
+			if(!hasAllOf.All(tag => Tags.Contains(tag)))
+				return false; 
+			
+			return true;
         }
 
         /// <summary>
@@ -109,13 +109,9 @@ namespace Anthology.Models
         /// <returns>True if location has at least one of the tags specified.</returns>
         private bool HasOneOrMoreOf(IEnumerable<string> hasOneOrMoreOf)
         {
-            IEnumerator<string> enumerator = hasOneOrMoreOf.GetEnumerator();
-            if (!enumerator.MoveNext()) return true;
-            do
-            {
-                if (Tags.Contains(enumerator.Current)) return true;
-            } while (enumerator.MoveNext());
-            return false;
+			if(hasOneOrMoreOf.Any(tag => Tags.Contains(tag)))
+				return true; 
+			return false; 
         }
 
         /// <summary>
@@ -125,12 +121,9 @@ namespace Anthology.Models
         /// <returns>True if location has none of the given tags.</returns>
         private bool HasNoneOf(IEnumerable<string> hasNoneOf)
         {
-            IEnumerator<string> enumerator = hasNoneOf.GetEnumerator();
-            while (enumerator.MoveNext())
-            {
-                if (Tags.Contains(enumerator.Current)) return false;
-            }
-            return true;
+			if(hasNoneOf.Any(tag => Tags.Contains(tag)))
+				return false; 
+			return true; 
         }
 
         /// <summary>
@@ -138,7 +131,7 @@ namespace Anthology.Models
         /// </summary>
         /// <param name="minNumPeople">The minimum amount of people.</param>
         /// <returns>True if location has at least the given amount of people.</returns>
-        private bool HasMinNumPeople(short minNumPeople)
+        public bool HasMinNumPeople(short minNumPeople)
         {
             return minNumPeople <= AgentsPresent.Count;
         }
@@ -148,7 +141,7 @@ namespace Anthology.Models
         /// </summary>
         /// <param name="maxNumPeople">The max amount of people.</param>
         /// <returns>True if location has less than or equal to given amount of people.</returns>
-        private bool HasNotMaxNumPeople(short maxNumPeople)
+        public bool HasNotMaxNumPeople(short maxNumPeople)
         {
             return maxNumPeople >= AgentsPresent.Count;
         }
@@ -158,7 +151,7 @@ namespace Anthology.Models
         /// </summary>
         /// <param name="specificPeoplePresent">The set of people to check.</param>
         /// <returns>True if location has given people.</returns>
-        private bool SpecificPeoplePresent(IEnumerable<string> specificPeoplePresent)
+        internal bool SpecificPeoplePresent(IEnumerable<string> specificPeoplePresent)
         {
             IEnumerator<string> enumerator = specificPeoplePresent.GetEnumerator();
             while (enumerator.MoveNext())
@@ -173,7 +166,7 @@ namespace Anthology.Models
         /// </summary>
         /// <param name="specificPeopleAbsent">The set of people to check.</param>
         /// <returns>True if location does not have the given people.</returns>
-        private bool SpecificPeopleAbsent(IEnumerable<string> specificPeopleAbsent)
+        internal bool SpecificPeopleAbsent(IEnumerable<string> specificPeopleAbsent)
         {
             IEnumerator<string> enumerator = specificPeopleAbsent.GetEnumerator();
             while (enumerator.MoveNext())
@@ -188,28 +181,26 @@ namespace Anthology.Models
         /// </summary>
         /// <param name="relationshipsPresent">The relationships to check.</param>
         /// <returns>True if given relationships are present at location.</returns>
-        private bool RelationshipsPresent(IEnumerable<string> relationshipsPresent)
+        internal bool RelationshipsPresent(IEnumerable<string> relationshipsPresent, Agent agent)
         {
-            IEnumerator<string> enumerator = relationshipsPresent.GetEnumerator();
-            if (!enumerator.MoveNext()) { return true; }
-            List<string> relationshipsHere = new();
-            foreach (string name in AgentsPresent)
-            {
-                IEnumerable<Relationship> ar = AgentManager.GetAgentByName(name).Relationships;
-                foreach (Relationship r in ar)
-                {
-                    if (AgentsPresent.Contains(r.With))
-                    {
-                        relationshipsHere.Add(r.Type);
-                    }
-                }
-            }
-            do
-            {
-                if (!relationshipsHere.Contains(enumerator.Current)) return false;
-            } while (enumerator.MoveNext());
-            return true;
+			foreach (string checkRel in relationshipsPresent){
+				if (!agent.Relationships.Any(rel => rel.Type == checkRel && AgentsPresent.Contains(rel.With))){
+					return false;
+				}
+			}
+			return true;
         }
+
+		internal bool RelationshipsAbsent(IEnumerable<string> relationshipsAbsent, Agent agent)
+        {
+			foreach (string checkRel in relationshipsAbsent){
+				if (agent.Relationships.Any(rel => rel.Type == checkRel && AgentsPresent.Contains(rel.With))){
+					return false;
+				}
+			}
+			return true;
+		}
+
 		public override string ToString() {
 			return string.Format("{0}({1},{2})", Name, X, Y);
 		}
@@ -229,5 +220,5 @@ namespace Anthology.Models
 		public void LeaveLocation(string agent_name){
 			AgentsPresent.Add(agent_name);
 		}
-    }
+	}
 }

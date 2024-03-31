@@ -10,6 +10,7 @@ using JsonSerializer = System.Text.Json.JsonSerializer;
 using Amazon.Runtime.Internal.Util;
 using UnityEngine;
 using Unity.Jobs;
+using System.Linq;
 // using System.Diagnostics;
 
 namespace Anthology.Models
@@ -93,7 +94,7 @@ namespace Anthology.Models
             //     sAgents.Add(SerializableAgent.SerializeAgent(a));
             // }
 
-            return JsonSerializer.Serialize(AgentManager.Agents, Jso);
+            return JsonSerializer.Serialize(AgentManager.Agents.Values.ToList(), Jso);
         }
 
         /// <summary>
