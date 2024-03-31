@@ -29,7 +29,7 @@ namespace Anthology.Models
             {
                 if (ToContinue())
                 {
-					foreach (Agent agent in AgentManager.Agents) {
+					foreach (Agent agent in AgentManager.Agents.Values) {
 						Turn(agent);
 					}
 					
