@@ -195,21 +195,21 @@ namespace Anthology.Models
         /// Location requirements in the container.
         /// </summary>
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        [JsonPropertyName("Location Requirements")]
+        [JsonPropertyName("LocationRequirements")]
         public List<RLocation> Locations { get; set; }
 
         /// <summary>
         /// People requirements in the container.
         /// </summary>
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        [JsonPropertyName("People Requirements")]
+        [JsonPropertyName("PeopleRequirements")]
         public List<RPeople> People { get; set; }
 
         /// <summary>
         /// Motive requirements in the container.
         /// </summary>
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        [JsonPropertyName("Motive Requirements")]
+        [JsonPropertyName("MotiveRequirements")]
         public List<RMotive> Motives { get; set; }
 
         /// <summary>
