@@ -82,19 +82,22 @@ namespace Anthology.Models
         /// Set of string tags that must be a subset of the location's tags for the action to occur.
         /// </summary>
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+		[JsonPropertyName("HasAllOf")]
         public List<string> HasAllOf { get; set; } = new();
 
         /// <summary>
         /// Set of string tags in which their must exist at least one match with the location's tags for the action to occur.
         /// </summary>
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-        public List<string> HasOneOrMoreOf { get; set; } = new();
+        [JsonPropertyName("HasOneOrMoreOf")]
+		public List<string> HasOneOrMoreOf { get; set; } = new();
 
         /// <summary>
         /// Set of string tags that must be a disjoint set of the location's tags for the action to occur.
         /// </summary>
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-        public List<string> HasNoneOf { get; set; } = new();
+        [JsonPropertyName("HasNoneOf")]
+		public List<string> HasNoneOf { get; set; } = new();
     }
 
     /// <summary>
@@ -116,12 +119,12 @@ namespace Anthology.Models
         /// <summary>
         /// The minimum number of people that must be present for the action to occur.
         /// </summary>
-        public short MinNumPeople { get; set; }
+        public short MinNumPeople { get; set; } = 0;
 
         /// <summary>
         /// The maximum number of people that may be present for the action to occur.
         /// </summary>
-        public short MaxNumPeople { get; set; }
+        public short MaxNumPeople { get; set; } = 0;
 
         /// <summary>
         /// Set of agents that must be present for the action to be completed.
@@ -196,21 +199,21 @@ namespace Anthology.Models
         /// </summary>
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         [JsonPropertyName("LocationRequirements")]
-        public List<RLocation> Locations { get; set; }
+        public List<RLocation> Locations { get; set; } = null;
 
         /// <summary>
         /// People requirements in the container.
         /// </summary>
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         [JsonPropertyName("PeopleRequirements")]
-        public List<RPeople> People { get; set; }
+        public List<RPeople> People { get; set; } = null;
 
         /// <summary>
         /// Motive requirements in the container.
         /// </summary>
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         [JsonPropertyName("MotiveRequirements")]
-        public List<RMotive> Motives { get; set; }
+        public List<RMotive> Motives { get; set; } = null;
 
         /// <summary>
         /// Add an arbitrary requirement to the container.

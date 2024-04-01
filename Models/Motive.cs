@@ -109,7 +109,7 @@ namespace Anthology.Models
 			return false;
         }
 
-		internal bool checkReqThreshold(RMotive motiveReq)
+		public bool checkReqThreshold(RMotive motiveReq)
 		{
 			string t = motiveReq.MotiveType;
 			float c = motiveReq.Threshold;

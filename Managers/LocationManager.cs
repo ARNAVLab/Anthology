@@ -165,35 +165,18 @@ namespace Anthology.Models
         /// </summary>
         /// <param name="requirements">Requirements that locations must satisfy in order to be returned.</param>
         /// <returns>Returns all the locations that satisfied the given requirement, or an empty enumerable if none match.</returns>
-        public static List<LocationNode> LocationsSatisfyingLocationRequirement(RLocation requirements)
+        public static List<LocationNode> LocationsSatisfyingLocationRequirement(RLocation locationReq, IEnumerable<LocationNode> checkLocations = null)
         {
-            List<LocationNode> matches = new();
-            if (requirements.HasOneOrMoreOf.Count() > 0)
-            {
-                foreach (string tag in requirements.HasOneOrMoreOf)
-                {
-                    matches.AddRange(LocationsByTag[tag]);
-                }
-            }
-            else
-            {
-                matches.AddRange(LocationsByName.Values);
-            }
-            if (requirements.HasAllOf.Count() > 0)
-            {
-                foreach (string tag in requirements.HasAllOf)
-                {
-                    matches = matches.Intersect(LocationsByTag[tag]).ToList();
-                }
-            }
-            if (requirements.HasNoneOf.Count() > 0)
-            {
-                foreach (string tag in requirements.HasNoneOf)
-                {
-                    matches = matches.Except(LocationsByTag[tag]).ToList();
-                }
-            }
-            return matches;
+			List<LocationNode> matches = new();
+
+			checkLocations ??= LocationsByName.Values;
+			
+			foreach (LocationNode location in checkLocations)
+			{
+				if(location.SatisfiesLocationRequirements(locationReq))
+					matches.Add(location);
+			}
+			return matches;
         }
 
         /// <summary>
@@ -205,25 +188,28 @@ namespace Anthology.Models
         /// <param name="requirements">Requirements that locations must satisfy to be returned.</param>
         /// <param name="agent">Agent relevant for handling agent requirement(s).</param>
         /// <returns>Returns all the locations that satisfied the given requirement, or an empty enumerable if none match.</returns>
-        public static List<LocationNode> LocationsSatisfyingPeopleRequirement(IEnumerable<LocationNode> locations, RPeople requirements, string agent_name = "")
+        public static List<LocationNode> LocationsSatisfyingPeopleRequirement(RPeople requirements, Agent agent, IEnumerable<LocationNode> checkLocations)
         {
+			List<LocationNode> matches = new();
+			checkLocations ??= LocationsByName.Values;
+
 			bool IsLocationValid(LocationNode location){
-                if (agent_name == "" || location.AgentsPresent.Contains(agent_name)) {
-                    return location.SatisfiesRequirements(requirements);
+                if (location.AgentsPresent.Contains(agent.Name)) {
+                    return location.SatisfiesPeopleRequirements(requirements, agent);
                 }
                 else {
 					// making sure the People requirements take the agent into account for the test
-                    location.AgentsPresent.Add(agent_name);
-                    bool valid = location.SatisfiesRequirements(requirements);
-                    location.AgentsPresent.Remove(agent_name);
+                    location.AgentsPresent.Add(agent.Name);
+                    bool valid = location.SatisfiesPeopleRequirements(requirements, agent);
+                    location.AgentsPresent.Remove(agent.Name);
                     return valid;
                 }
             }
 
-            List<LocationNode> matches = new();
-            foreach (LocationNode location in locations)
+            foreach (LocationNode location in checkLocations)
             {
-                if (IsLocationValid(location)) matches.Add(location);
+                if (IsLocationValid(location)) 
+					matches.Add(location);
             }
 
             return matches;

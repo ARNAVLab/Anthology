@@ -82,7 +82,18 @@ namespace Anthology.Models
         public static void StartAction(Agent agent)
         {
             Action action = agent.CurrentAction.First.Value;
-            agent.OccupiedCounter = action.MinTime;
+			List<RPeople> rPeople = action.Requirements.People;
+
+			if(rPeople != null && !agent.CurrentLocation.SatisfiesPeopleRequirements(rPeople[0], agent)){
+				UnityEngine.Debug.LogFormat("{0}: Foiled from performing:{1} by others! PeopleRequirement has failed.", agent.Name, action.Name);
+				agent.Destination = new();
+				agent.OccupiedCounter = 0;
+				agent.CurrentAction.RemoveFirst();
+			}
+			else{
+				agent.OccupiedCounter = action.MinTime;
+			}
+            
             
             // if (action is ScheduleAction)
             // {
@@ -115,9 +126,13 @@ namespace Anthology.Models
         /// </summary>
         public static void MoveCloserToDestination(Agent agent)
         {
-            if (agent.Destination.Count == 0) return;
+            if (agent.Destination.Count == 0){
+				// if (agent.CurrentAction.Count >= 0) StartAction(agent);
+				return;
+			}
 			agent.CurrentLocation = agent.Destination[0]; 
 			agent.Destination.RemoveAt(0);
+			// agent.OccupiedCounter--;
         }
 
 		/// <summary>
@@ -128,11 +143,12 @@ namespace Anthology.Models
             agent.OccupiedCounter = 0;
 
 			// Execute the first action queued up
+			// UnityEngine.Debug.LogFormat("");
 			Action action = agent.CurrentAction.First.Value;
+			agent._lastAction = action.Name;
+
 			action.Effects.ApplyActionEffects(agent);
 			agent.CurrentAction.RemoveFirst();
-			
-            
         }
 
 		/// <summary>
@@ -142,15 +158,19 @@ namespace Anthology.Models
         public static void SelectNextAction(Agent agent)
         {
             float maxDeltaUtility = 0f;
+
             List<Action> currentChoice = new();
             List<LocationNode> currentDest = new();
             List<string> actionSelectLog = new();
-            // LocationNode currentLoc = LocationManager.LocationsByName[CurrentLocation];
 
             foreach(Action action in ActionManager.Actions.Values)
             {
-                if (action.Hidden) continue;
-                actionSelectLog.Add("Action: " + action.Name);
+                if (action.Hidden==true || action.Name==agent._lastAction) 
+					continue;
+
+				// if (agent.Name == "Thomas") UnityEngine.Debug.LogFormat("{0}: Looking at {1}", agent.Name, action.Name);
+                
+				// actionSelectLog.Add("Action: " + action.Name);
 
                 float travelTime;
                 List<LocationNode> possibleLocations = new();
@@ -158,13 +178,10 @@ namespace Anthology.Models
                 List<RLocation> rLocations = action.Requirements.Locations;
                 List<RPeople> rPeople = action.Requirements.People;
 
-                if (rMotives != null)
-                {
-                    if (!AgentManager.AgentSatisfiesMotiveRequirement(agent, rMotives))
-                    {
-                        continue;
-                    }
-                }
+                if (rMotives != null && !AgentManager.AgentSatisfiesMotiveRequirement(agent, rMotives)){
+					continue;
+				}
+                
                 if (rLocations != null)
                 {
                     possibleLocations = LocationManager.LocationsSatisfyingLocationRequirement(rLocations[0]);
@@ -173,20 +190,23 @@ namespace Anthology.Models
                 {
                     possibleLocations.AddRange(LocationManager.LocationsByName.Values);
                 }
-                if (rPeople != null && possibleLocations.Count > 0)
+                
+				if (rPeople != null)
                 {
-                    possibleLocations = LocationManager.LocationsSatisfyingPeopleRequirement(possibleLocations, rPeople[0]);
+                    possibleLocations = LocationManager.LocationsSatisfyingPeopleRequirement(rPeople[0], agent, possibleLocations);
                 }
 
                 if (possibleLocations.Count > 0)
                 {
                     LocationNode nearestLocation = LocationManager.FindNearestLocationFrom(agent.CurrentLocation, possibleLocations);
-                    /*if (nearestLocation == null) continue;*/
-                    travelTime = LocationManager.DistanceMatrix[agent.CurrentLocation, nearestLocation];
+
+                    // travelTime = LocationManager.DistanceMatrix[agent.CurrentLocation, nearestLocation];
                     float deltaUtility = ActionManager.GetEffectDeltaForAgentAction(agent, action);
-                    float denom = action.MinTime + travelTime;
+                    float denom = action.MinTime; // + travelTime;
                     if (denom != 0)
                         deltaUtility /= denom;
+
+					// if (agent.Name == "Thomas") UnityEngine.Debug.LogFormat("{0}: Considering {1} with delta:{2}", agent.Name, action.Name, deltaUtility);
 
                     if (deltaUtility == maxDeltaUtility)
                     {
@@ -195,6 +215,7 @@ namespace Anthology.Models
                     }
                     else if (deltaUtility > maxDeltaUtility)
                     {
+						
                         maxDeltaUtility = deltaUtility;
                         currentChoice.Clear();
                         currentDest.Clear();
@@ -203,22 +224,29 @@ namespace Anthology.Models
                     }
                 }
             }
-            System.Random r = new();
-            int idx = r.Next(0, currentChoice.Count);
-            Action choice = currentChoice[idx];
-            LocationNode dest = currentDest[idx];
-            agent.CurrentAction.AddLast(choice);
 
-			if (dest != null && dest != agent.CurrentLocation)
-            {
-				// Debug.LogFormat("Need to travel to: {0} from {1}", dest, agent.CurrentLocation);
-                agent.CurrentAction.AddFirst(ActionManager.GetActionByName("travel_action"));
-                StartTravelToLocation(agent, dest, World.Time);
-            }
-            else if (dest == null || dest == agent.CurrentLocation)
-            {
-                StartAction(agent);
-            }
+			// if (agent.Name == "Thomas")
+			// 	UnityEngine.Debug.LogFormat("{0}: Considering {1} actions", agent.Name, currentChoice.Count);
+
+			if (currentChoice.Count > 0){
+				System.Random r = new();
+				int idx = r.Next(0, currentChoice.Count);
+				Action choice = currentChoice[idx];
+				LocationNode dest = currentDest[idx];
+				agent.CurrentAction.AddLast(choice);
+
+				if (dest != null && dest != agent.CurrentLocation)
+				{
+					// Debug.LogFormat("Need to travel to: {0} from {1}", dest, agent.CurrentLocation);
+					agent.CurrentAction.AddFirst(ActionManager.GetActionByName("travel_action"));
+					StartTravelToLocation(agent, dest, World.Time);
+				}
+				else if (dest == null || dest == agent.CurrentLocation)
+				{
+					StartAction(agent);
+				}
+			}
+            
         }
     }
 }

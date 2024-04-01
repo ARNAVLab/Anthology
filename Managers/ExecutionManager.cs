@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -29,11 +30,11 @@ namespace Anthology.Models
             {
                 if (ToContinue())
                 {
-					foreach (Agent agent in AgentManager.Agents) {
+					foreach (Agent agent in AgentManager.Agents.Values) {
 						Turn(agent);
 					}
 					
-                    // Parallel.ForEach(AgentManager.Agents, agent =>
+                    // Parallel.ForEach(AgentManager.Agents.Values, agent =>
                     // {
                     //     Turn(agent);
                     // });
@@ -69,7 +70,7 @@ namespace Anthology.Models
         public static bool Turn(Agent agent)
         {
             bool movement = false;
-			if (agent.CurrentAction.First.Value.Name == "travel_action" && agent.Destination.Count > 0) {
+			if (agent.CurrentAction.Count > 0 && agent.CurrentAction.First.Value.Name == "travel_action" && agent.Destination.Count > 0) {
 				movement = true;
 				ActionManager.MoveCloserToDestination(agent);
 			}

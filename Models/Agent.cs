@@ -71,6 +71,8 @@ namespace Anthology.Models
         /// </summary>
         public LinkedList<Action> CurrentAction { get; set; } = new();
 
+		public string _lastAction { get; set; } = string.Empty;
+
         /// <summary>
         /// The path to the destination that this agent is heading towards. 
         /// Can be an empty list if the agent has reached their previous

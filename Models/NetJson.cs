@@ -77,7 +77,7 @@ namespace Anthology.Models
 			foreach (Agent deserialized_agent in sAgents)
             {
 				deserialized_agent.CurrentAction.AddFirst(ActionManager.GetActionByName("wait_action"));
-                AgentManager.Agents.Add(deserialized_agent);
+                AgentManager.Agents[deserialized_agent.Name] = deserialized_agent;
             }
         }
 
