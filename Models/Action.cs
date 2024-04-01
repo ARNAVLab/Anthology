@@ -57,5 +57,13 @@ namespace Anthology.Models
 		// 		}
 		// 	}
 		// }
+
+		/// <summary>
+		/// For debugging and logging purposes
+		/// </summary>
+		/// <returns>Name of the agent</returns>
+		public override string ToString() {
+			return string.Format("Action:{0}", Name);
+		}
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -71,10 +72,20 @@ namespace Anthology.Models
         /// <returns>True if agent satisfies all requirements for an action.</returns>
         public static bool AgentSatisfiesMotiveRequirement(Agent agent, List<RMotive> reqs)
         {
-            foreach (RMotive motiveReq in reqs)
-            	if (!agent.Motives.checkReqThreshold(motiveReq)) return false;
-            
-            return true;
+			// if (reqs.Any(motiveReq => agent.Motives.checkReqThreshold(motiveReq) == false)){
+			// 	return false; 
+			// }
+			
+			// return true;
+
+            foreach (RMotive motiveReq in reqs){
+				if (!agent.Motives.checkReqThreshold(motiveReq)) {
+					UnityEngine.Debug.LogFormat("{0}: fails motive requirement -- {1}{2}{3}",agent.Name, motiveReq.MotiveType, motiveReq.Operation, motiveReq.Threshold);
+					return false;
+				}
+			}
+			UnityEngine.Debug.LogFormat("{0}: passes motive requirement",agent.Name);
+			return true;
         }
 
         /// <summary>

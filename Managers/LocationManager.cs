@@ -4,8 +4,10 @@ using System.Diagnostics;
 using System.Diagnostics.Tracing;
 using System.Linq;
 using System.Numerics;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Jint.Parser;
+using SharpCompress.Common;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Rendering.VirtualTexturing;
@@ -107,9 +109,17 @@ namespace Anthology.Models
 					LocationsByTag[tag].Add(node);
 				}
 			}
-			
-            
         }
+
+		public static List<LocationNode> GetPOILocations(){
+			List<LocationNode> locations = new();
+			foreach (LocationNode entry in LocationsByName.Values){
+				if (entry.Tags.Contains("Road")){
+					locations.Add(entry);
+				}
+			}
+			return locations;
+		}
 
         /// <summary>
         /// Creates and adds a location to each of the static data structures.
@@ -272,15 +282,27 @@ namespace Anthology.Models
             return nearest;
         }
 
+		internal static void AddConnectionsToLocation(LocationNode location, List<LocationNode> around){
+			foreach (LocationNode poi in around)
+				{
+					location.Connections[poi] = 1;
+					poi.Connections[location] = 1;
+				}
+		}
+
 		internal static void UpdateConnections()
 		{
 			foreach (LocationNode road in LocationsByTag["Road"])
 			{
-				List<LocationNode> around = FindPOIsAroundLocation(road.X, road.Y);
-				foreach (LocationNode location in around)
-				{
-					road.Connections[location] = 1;
-					location.Connections[road] = 1;
+				List<LocationNode> around = FindPOIsAroundLocation(road);
+				AddConnectionsToLocation(road, around);
+			}
+
+			// If locations don't have roads near them, allow connections to nearby locations that (hopefully) do
+			foreach (LocationNode location in LocationsByPosition.Values){
+				if (location.Connections.Count == 0){
+					List<LocationNode> around = FindPOIsAroundLocation(location);
+					AddConnectionsToLocation(location, around);
 				}
 			}
 		}
@@ -316,8 +338,11 @@ namespace Anthology.Models
 			}
 		}
 
-		private static List<LocationNode> FindPOIsAroundLocation(float x, float y)
+		private static List<LocationNode> FindPOIsAroundLocation(LocationNode location)
 		{
+			float x =  location.X;
+			float y = location.Y;
+
 			List<LocationNode> around = new();
 			LocationNode _temp;
 			if(LocationsByPosition.TryGetValue(new(x + 1, y), out _temp)){
@@ -332,18 +357,18 @@ namespace Anthology.Models
 			if(LocationsByPosition.TryGetValue(new(x, y - 1), out _temp)){
 				around.Add(_temp);
 			} 
-			if(LocationsByPosition.TryGetValue(new(x - 1, y - 1), out _temp)){
-				around.Add(_temp);
-			} 
-			if(LocationsByPosition.TryGetValue(new(x + 1, y - 1), out _temp)){
-				around.Add(_temp);
-			} 
-			if(LocationsByPosition.TryGetValue(new(x - 1, y + 1), out _temp)){
-				around.Add(_temp);
-			} 
-			if(LocationsByPosition.TryGetValue(new(x + 1, y + 1), out _temp)){
-				around.Add(_temp);
-			} 
+			// if(LocationsByPosition.TryGetValue(new(x - 1, y - 1), out _temp)){
+			// 	around.Add(_temp);
+			// } 
+			// if(LocationsByPosition.TryGetValue(new(x + 1, y - 1), out _temp)){
+			// 	around.Add(_temp);
+			// } 
+			// if(LocationsByPosition.TryGetValue(new(x - 1, y + 1), out _temp)){
+			// 	around.Add(_temp);
+			// } 
+			// if(LocationsByPosition.TryGetValue(new(x + 1, y + 1), out _temp)){
+			// 	around.Add(_temp);
+			// } 
 			return around;
 		}
 	}

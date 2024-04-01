@@ -117,9 +117,9 @@ namespace Anthology.Models
 					agent.Motives[motiveEffect.MotiveType] = (float)agent.Motives[motiveEffect.MotiveType] + motiveEffect.Delta;
 			}
 			
-			foreach (RelationshipEffect relEffect in Relationships) {
-				throw new NotImplementedException();
-			}
+			// foreach (RelationshipEffect relEffect in Relationships) {
+			// 	throw new NotImplementedException();
+			// }
 		}
 	}
 

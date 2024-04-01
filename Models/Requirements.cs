@@ -212,50 +212,50 @@ namespace Anthology.Models
         [JsonPropertyName("Motive Requirements")]
         public List<RMotive> Motives { get; set; }
 
-        /// <summary>
-        /// Add an arbitrary requirement to the container.
-        /// </summary>
-        /// <param name="req">The requirement to add.</param>
-        public void AddRequirement(Requirement req)
-        {
-            if (req is RLocation rl)
-            {
-                Locations ??= new();
-                Locations.Add(rl);
-            }
-            else if (req is RPeople rp)
-            {
-                People ??= new();
-                People.Add(rp);
-            }
-            else if (req is RMotive rm)
-            {
-                Motives ??= new();
-                Motives.Add(rm);
-            }
-        }
+        // /// <summary>
+        // /// Add an arbitrary requirement to the container.
+        // /// </summary>
+        // /// <param name="req">The requirement to add.</param>
+        // public void AddRequirement(Requirement req)
+        // {
+        //     if (req is RLocation rl)
+        //     {
+        //         Locations ??= new();
+        //         Locations.Add(rl);
+        //     }
+        //     else if (req is RPeople rp)
+        //     {
+        //         People ??= new();
+        //         People.Add(rp);
+        //     }
+        //     else if (req is RMotive rm)
+        //     {
+        //         Motives ??= new();
+        //         Motives.Add(rm);
+        //     }
+        // }
 
-        /// <summary>
-        /// Get a set of all requirements in the container.
-        /// </summary>
-        /// <returns>All of container's requirements as a set.</returns>
-        public IEnumerable<Requirement> GetAll()
-        {
-            List<Requirement> reqs = new();
-            if (Locations != null) reqs.AddRange(Locations);
-            if (People != null) reqs.AddRange(People);
-            if (Motives != null) reqs.AddRange(Motives);
-            return reqs;
-        }
+        // /// <summary>
+        // /// Get a set of all requirements in the container.
+        // /// </summary>
+        // /// <returns>All of container's requirements as a set.</returns>
+        // public IEnumerable<Requirement> GetAll()
+        // {
+        //     List<Requirement> reqs = new();
+        //     if (Locations != null) reqs.AddRange(Locations);
+        //     if (People != null) reqs.AddRange(People);
+        //     if (Motives != null) reqs.AddRange(Motives);
+        //     return reqs;
+        // }
 
-		public List<Requirement> GetRequirementsByType(string r_type)
-        {
-            List<Requirement> reqs = new();
+		// public List<Requirement> GetRequirementsByType(string r_type)
+        // {
+        //     List<Requirement> reqs = new();
       
-			if (r_type == Requirement.LOCATION && Locations != null)  reqs.AddRange(Locations);
-            else if (r_type == Requirement.PEOPLE && People != null) reqs.AddRange(People);
-			if (r_type == Requirement.MOTIVE && Motives != null) reqs.AddRange(Motives);
-            return reqs;
-        }
+		// 	if (r_type == Requirement.LOCATION && Locations != null)  reqs.AddRange(Locations);
+        //     else if (r_type == Requirement.PEOPLE && People != null) reqs.AddRange(People);
+		// 	if (r_type == Requirement.MOTIVE && Motives != null) reqs.AddRange(Motives);
+        //     return reqs;
+        // }
     }
 }
