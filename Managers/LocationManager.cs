@@ -101,22 +101,6 @@ namespace Anthology.Models
         }
 
         /// <summary>
-        /// Creates and adds a location to each of the static data structures.
-        /// </summary>
-        /// <param name="name">Name of the location.</param>
-        /// <param name="x">X-coordinate of the location.</param>
-        /// <param name="y">Y-coordinate of the location.</param>
-        /// <param name="tags">Relevant tags of the location.</param>
-        /// <param name="connections">Connections from the location to others.</param>
-		/// 	Sasha delete?
- ///        // public static void AddLocation(string name, float x, float y, IEnumerable<string> tags, Dictionary<LocationNode, float> connections)
-        // {
-        //     List<string> newTags = new();
-        //     newTags.AddRange(tags);
-        //     AddLocation(new() { Name = name, X = x, Y = y, Tags = newTags, Connections = connections });
-        // }
-
-        /// <summary>
         /// Resets and populates the static distance matrix with all-pairs-shortest-path
         /// via the Floyd-Warshall algorithm.
         /// </summary>
@@ -240,6 +224,11 @@ namespace Anthology.Models
             return nearest;
         }
 
+		/// <summary>
+		/// Creates connected edges in the graph 
+		/// An edge between two points implies that the agent can travel between them
+		/// Currently we assume all neighboring distances are a single unit in distance. 
+		/// </summary>
 		internal static void UpdateConnections()
 		{
 			foreach (LocationNode road in LocationsByTag["Road"])
@@ -253,6 +242,13 @@ namespace Anthology.Models
 			}
 		}
 
+		/// <summary>
+		/// Finds the path between any two locations on the map 
+		/// Uses a lazy approach, once a path has been calculated it's saved so that it's not calculated again.
+		/// </summary>
+		/// <param name="startLoc">Start Location</param>
+		/// <param name="endLoc">End Locatino</param>
+		/// <returns></returns>
 		internal static List<LocationNode> FindPathsBetween(LocationNode startLoc, LocationNode endLoc){
 			if(DiscoveredPaths.ContainsKey(startLoc, endLoc)){
 				return DiscoveredPaths[startLoc, endLoc];
@@ -284,6 +280,13 @@ namespace Anthology.Models
 			}
 		}
 
+		/// <summary>
+		/// Finds the valid points on the location map around a given x,y coordinate
+		/// Valid points are defined as those the agent can traverse to in using the cardinal (N,S,E,W) directions
+		/// </summary>
+		/// <param name="x">X Coordinate</param>
+		/// <param name="y">Y Coordinate</param>
+		/// <returns>List of valid locations around the point</returns>
 		private static List<LocationNode> FindPOIsAroundLocation(float x, float y)
 		{
 			List<LocationNode> around = new();
