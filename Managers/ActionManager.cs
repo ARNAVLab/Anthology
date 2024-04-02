@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using MongoDB.Bson.Serialization.Serializers;
 using UnityEditor.Playables;
 
 namespace Anthology.Models
@@ -138,15 +139,23 @@ namespace Anthology.Models
         /// Applies the effect of an action to this agent.
         /// </summary>
         public static void ExecuteAction(Agent agent) {
-			agent.Destination = new();
-            agent.OccupiedCounter = 0;
+			int partially;
 
 			// Execute the first action queued up
 			// UnityEngine.Debug.LogFormat("");
 			Action action = agent.CurrentAction.First.Value;
 			agent._lastAction = action.Name;
-
-			action.Effects.ApplyActionEffects(agent);
+			
+			if (agent.OccupiedCounter == 0){
+				partially = 1;
+			} 
+			else {
+				partially = (int)Math.Round((float)((action.MinTime - agent.OccupiedCounter)/action.MinTime), 0);
+				agent.OccupiedCounter = 0;
+			}
+			
+			agent.Destination = new();
+			action.Effects.ApplyActionEffects(agent, partially);
 			agent.CurrentAction.RemoveFirst();
         }
 

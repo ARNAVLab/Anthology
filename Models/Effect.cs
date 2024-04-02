@@ -110,10 +110,11 @@ namespace Anthology.Models
 			return deltaUtility;
 		}
 
-		public void ApplyActionEffects(Agent agent){	
+		public void ApplyActionEffects(Agent agent, int partially=1){	
+			// int _partially = (int)Math.Round(partially, 0);
 			foreach (MotiveEffect motiveEffect in Motives) {
 				if(motiveEffect.MotiveType != "")
-					agent.Motives[motiveEffect.MotiveType] = (float)agent.Motives[motiveEffect.MotiveType] + motiveEffect.Delta;
+					agent.Motives[motiveEffect.MotiveType] = (float)agent.Motives[motiveEffect.MotiveType] + (motiveEffect.Delta*partially);
 			}
 			
 			foreach (RelationshipEffect relEffect in Relationships) {
