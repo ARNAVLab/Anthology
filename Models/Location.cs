@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text.Json.Serialization;
 
@@ -81,13 +82,63 @@ namespace Anthology.Models
         /// <returns>True if location satisfies all requirements.</returns>
         public bool SatisfiesPeopleRequirements(RPeople peopleReq, Agent agent)
         {
-            return HasMinNumPeople(peopleReq.MinNumPeople) &&
+            bool test =  HasMinNumPeople(peopleReq.MinNumPeople) &&
                    HasNotMaxNumPeople(peopleReq.MaxNumPeople) &&
                    SpecificPeoplePresent(peopleReq.SpecificPeoplePresent) &&
                    SpecificPeopleAbsent(peopleReq.SpecificPeopleAbsent) &&
                    RelationshipsPresent(peopleReq.RelationshipsPresent, agent) &&
 				   RelationshipsAbsent(peopleReq.RelationshipsAbsent, agent);
+			return test; 
         }
+
+		public List<Agent> FindTargetsForAction(RPeople peopleReq, Agent agent){
+			HashSet<string> targets = new(); 
+			
+			if (!AgentsPresent.Any(person => person != agent.Name)){
+				if (peopleReq.MinNumPeople <= 1){
+					// Meets people requirements, but no targets
+					return new();
+				}
+				else{
+					// Fails people requirements
+					return null;
+				}
+			}
+
+			foreach (string person in peopleReq.SpecificPeoplePresent){
+				if (AgentsPresent.Contains(person)) targets.Add(person);
+			}
+
+			foreach (string person in peopleReq.SpecificPeopleAbsent){
+				if (AgentsPresent.Contains(person)) targets.Remove(person);
+			}
+			
+			foreach(Relationship rel in agent.Relationships){
+				if (peopleReq.RelationshipsPresent.Contains(rel.Type) && AgentsPresent.Contains(rel.With)){
+					targets.Add(rel.With);
+				}
+				if (peopleReq.RelationshipsAbsent.Contains(rel.Type) && targets.Contains(rel.With)){
+					targets.Remove(rel.With);
+				}
+			}
+
+			targets.Remove(agent.Name);
+
+			// Not including the agent executing the action
+			if (targets.Count < (peopleReq.MinNumPeople-1)){
+				// fails people requirements
+				return null;
+			}
+
+			List<Agent> targetted = new(); 
+			foreach(string target in targets.Take(peopleReq.MaxNumPeople)){
+				Agent person = AgentManager.GetAgentByName(target);
+				if (person != null) targetted.Add(person);
+			}
+
+			// can be zero returned 
+			return targetted;
+		}
 
         /// <summary>
         /// Checks if location has all tags specified.
@@ -140,8 +191,8 @@ namespace Anthology.Models
         public bool HasMinNumPeople(short minNumPeople)
         {
 			if (minNumPeople == 0) return true;
-
-            return minNumPeople <= AgentsPresent.Count;
+			
+			return AgentsPresent.Count >= minNumPeople-1;
         }
 
         /// <summary>
@@ -151,9 +202,9 @@ namespace Anthology.Models
         /// <returns>True if location has less than or equal to given amount of people.</returns>
         public bool HasNotMaxNumPeople(short maxNumPeople)
         {
-			if (maxNumPeople == 0) return true;
+			if (maxNumPeople == short.MaxValue) return true;
 
-            return maxNumPeople >= AgentsPresent.Count;
+            return AgentsPresent.Count <= maxNumPeople-1;
         }
 
         /// <summary>
@@ -163,9 +214,9 @@ namespace Anthology.Models
         /// <returns>True if location has given people.</returns>
         internal bool SpecificPeoplePresent(IEnumerable<string> specificPeoplePresent)
         {
-			if(specificPeoplePresent.Count() == 0) return true; 
+			if(!specificPeoplePresent.Any()) return true; 
 
-            if(specificPeoplePresent.Count()>0 && specificPeoplePresent.Any(person => !AgentsPresent.Contains(person)))
+            if(specificPeoplePresent.Any(person => !AgentsPresent.Contains(person)))
 				return false; 
 
 			return true; 
@@ -178,10 +229,11 @@ namespace Anthology.Models
         /// <returns>True if location does not have the given people.</returns>
         private bool SpecificPeopleAbsent(IEnumerable<string> specificPeopleAbsent)
         {
-			if(specificPeopleAbsent.Count() == 0) return true; 
+			if(!specificPeopleAbsent.Any()) return true; 
 			
-			if(specificPeopleAbsent.Count() > 0 && specificPeopleAbsent.Any(person => AgentsPresent.Contains(person)))
+			if(specificPeopleAbsent.Any(person => AgentsPresent.Contains(person)))
 				return false; 
+
 			return true; 
         }
 
@@ -240,7 +292,7 @@ namespace Anthology.Models
 		/// </summary>
 		/// <param name="agent">Agent exiting the location</param>
 		public void LeaveLocation(Agent agent){
-			AgentsPresent.Add(agent.Name);
+			AgentsPresent.Remove(agent.Name);
 		}
     }
 }

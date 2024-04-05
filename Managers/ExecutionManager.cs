@@ -70,60 +70,50 @@ namespace Anthology.Models
         public static bool Turn(Agent agent)
         {
             bool movement = false;
-			if (agent.CurrentAction.Count > 0 && agent.CurrentAction.First.Value.Name == "travel_action" && agent.Destination.Count > 0) {
-				movement = true;
-				ActionManager.MoveCloserToDestination(agent);
+			if (agent.CurrentAction.Any()){
+				if (agent.CurrentAction.First.Value.Name == "travel_action" && agent.Destination.Any()) {
+					movement = true;
+					ActionManager.MoveCloserToDestination(agent);
+				}
+
+				if (agent.OccupiedCounter > 0){
+					agent.OccupiedCounter--;                
+				}
+
+				// If not travelling (i.e. arrived at destination), and end of occupied, execute planned action effects, select/start next.
+				else
+				{
+					ActionManager.ExecuteAction(agent);
+					
+					// if (!agent.Motives.IsContent())
+					// {
+						if (agent.CurrentAction.Count == 0)
+						{
+							ActionManager.SelectNextAction(agent);
+						}
+						else
+						{
+							ActionManager.StartAction(agent);
+						}
+					// }
+				}
+				return movement;
 			}
-
-            if (agent.OccupiedCounter > 0)
-            {
-                agent.OccupiedCounter--;                
-            }
-            // If not travelling (i.e. arrived at destination), and end of occupied, execute planned action effects, select/start next.
-            else
-            {
-                ActionManager.ExecuteAction(agent);
-				
-                if (!agent.Motives.IsContent())
-                {
-                    if (agent.CurrentAction.Count == 0)
-                    {
-                        ActionManager.SelectNextAction(agent);
-                    }
-                    else
-                    {
-                        ActionManager.StartAction(agent);
-                    }
-                }
-            }
-            return movement;
-        }
-
-        /// <summary>
-        /// Interrupts the agent from the current action they are performing.
-        /// Potential future implementation: Optionally add the interrupted action (with the remaining occupied counter) to the end of the action queue.
-        /// </summary>
-        /// <param name="agent">The agent to interrupt.</param>
-        public static void Interrupt(Agent agent)
-        {
-            agent.OccupiedCounter = 0;
-            agent.Destination = new();
-            Action interrupted = agent.CurrentAction.First.Value;
-            agent.CurrentAction.RemoveFirst();
-            Console.WriteLine("Agent: " + agent.Name + " was interrupted from action: " + interrupted.Name);
+			ActionManager.SelectNextAction(agent);
+			return false;
         }
 
         /// <summary>
         /// Interrupt the agent whose name matches given name.
         /// </summary>
         /// <param name="agentName">The name of the agent to interrupt.</param>
-        public static void Interrupt(string agentName)
-        {
-            Agent agent = AgentManager.GetAgentByName(agentName);
-            if (agent != null)
-            {
-                Interrupt(agent);
-            }
-        }
+        // public static void Interrupt(string agentName)
+        // {
+        //     Agent agent = AgentManager.GetAgentByName(agentName);
+        //     if (agent != null)
+        //     {
+        //         ActionManager.Interrupt(agent);
+        //     }
+        // }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json.Serialization;
 using Jint.Parser;
 using Newtonsoft.Json;
@@ -47,7 +48,6 @@ namespace Anthology.Models
 		public LocationNode CurrentLocation { 
 			get => _currentLocation; 
 			set {
-				// if (value is string)
 				if (value != _currentLocation){
 					_currentLocation.LeaveLocation(this);
 					_currentLocation = value; 
@@ -78,12 +78,19 @@ namespace Anthology.Models
         /// Can be an empty list if the agent has reached their previous
         /// destination and is executing an action.
         /// </summary>
-        public List<LocationNode> Destination { get; set; } = new();
+        public List<string> Destination { get; set; } = new();
 
 		public Agent DeserializeJSONAgent(string json_agent){
 			Agent agent = new();
 			
 			return agent;
+		}
+
+		public Action getCurrentAction(){
+			if (CurrentAction.Any())
+				return CurrentAction.First.Value;
+			else
+				return null;
 		}
     }
 }

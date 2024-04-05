@@ -113,7 +113,7 @@ namespace Anthology.Models
 				foreach (LocationNode loc2 in LocationsByName.Values)
 				{
 					if (loc1 == loc2) DistanceMatrix[loc1,loc2] = 0;
-					DistanceMatrix[loc1,loc2] = (float.MaxValue / 2f) - 1f;
+					DistanceMatrix[loc1,loc2] = float.MaxValue; // / 2f) - 1f;
 				}
 			}
 
@@ -125,6 +125,7 @@ namespace Anthology.Models
 
 					// Initializing the nextArray if there's an edge between the nodes 
 					NextInPath[loc1, loc2] = loc2;
+					NextInPath[loc2, loc1] = loc1;
                 }
             };
 
@@ -225,19 +226,34 @@ namespace Anthology.Models
         }
 
 		/// <summary>
-		/// Creates connected edges in the graph 
+		/// Connect any given location to it's neighboring locations
+		/// Adds an edge between the locations
+		/// </summary>
+		/// <param name="location">Location to be connected to neighbors</param>
+		internal static void ConnectToNeighbors(LocationNode location){
+			List<LocationNode> around = FindPOIsAroundLocation(location.X, location.Y);
+			foreach (LocationNode neighbor in around){
+				location.Connections[neighbor] = 1;
+				neighbor.Connections[location] = 1;
+			}
+		}
+		
+		/// <summary>
+		/// Creates connected edges in the graph between roads, and location nodes disconnected from roads in the graph
 		/// An edge between two points implies that the agent can travel between them
 		/// Currently we assume all neighboring distances are a single unit in distance. 
 		/// </summary>
 		internal static void UpdateConnections()
 		{
-			foreach (LocationNode road in LocationsByTag["Road"])
-			{
-				List<LocationNode> around = FindPOIsAroundLocation(road.X, road.Y);
-				foreach (LocationNode location in around)
-				{
-					road.Connections[location] = 1;
-					location.Connections[road] = 1;
+			foreach (LocationNode road in LocationsByTag["Road"]){
+				ConnectToNeighbors(road);
+			}
+
+			// Assumption: If there are any locations that are not near roads, connect them to nearby locations
+			// Kind of the equivalent of traipsing through neighboring buildings and backyards till you reach a road
+			foreach (LocationNode location in LocationsByName.Values){
+				if (!location.Connections.Any()){
+					ConnectToNeighbors(location);
 				}
 			}
 		}
@@ -249,9 +265,9 @@ namespace Anthology.Models
 		/// <param name="startLoc">Start Location</param>
 		/// <param name="endLoc">End Locatino</param>
 		/// <returns></returns>
-		internal static List<LocationNode> FindPathsBetween(LocationNode startLoc, LocationNode endLoc){
+		internal static List<string> FindPathsBetween(LocationNode startLoc, LocationNode endLoc){
 			if(DiscoveredPaths.ContainsKey(startLoc, endLoc)){
-				return DiscoveredPaths[startLoc, endLoc];
+				return DiscoveredPaths[startLoc, endLoc].Select(loc => loc.Name).ToList();
 			}
 			else {
 				if(!NextInPath.ContainsKey(startLoc,endLoc)) {
@@ -275,7 +291,7 @@ namespace Anthology.Models
 					// assumption: path is bidirectional (for simplicity) - storing path 
 					DiscoveredPaths[endLoc, startLoc] = _oppPath; 
 
-					return path;
+					return path.Select(loc => loc.Name).ToList();
 				}
 			}
 		}
