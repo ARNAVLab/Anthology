@@ -96,6 +96,13 @@ namespace Anthology.Models
 		[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)][JsonPropertyName("RelationshipEffects")]
 		public List<RelationshipEffect> Relationships {get; set;} = new();
 
+		
+		/// <summary>
+        /// Returns the net effect for an action for a specific agent.
+        /// Takes into account the agent's current motivation statuses.
+        /// </summary>
+        /// <param name="agent">The agent relevant to retrieve motives from.</param>
+        /// <returns>How much to affect motive by.</returns>
 		public float GetEffectDeltaForEffects(Agent agent)
 		{
 			float deltaUtility = 0;
@@ -110,10 +117,11 @@ namespace Anthology.Models
 			return deltaUtility;
 		}
 
-		public void ApplyActionEffects(Agent agent){	
+		public void ApplyActionEffects(Agent agent, int partially=1){	
+			// int _partially = (int)Math.Round(partially, 0);
 			foreach (MotiveEffect motiveEffect in Motives) {
 				if(motiveEffect.MotiveType != "")
-					agent.Motives[motiveEffect.MotiveType] = (float)agent.Motives[motiveEffect.MotiveType] + motiveEffect.Delta;
+					agent.Motives[motiveEffect.MotiveType] = (float)agent.Motives[motiveEffect.MotiveType] + (motiveEffect.Delta*partially);
 			}
 			
 			foreach (RelationshipEffect relEffect in Relationships) {

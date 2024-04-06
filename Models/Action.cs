@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Newtonsoft.Json.Linq;
+using UnityEditor.UI;
 using JsonIgnoreAttribute = Newtonsoft.Json.JsonIgnoreAttribute;
 
 
@@ -45,5 +46,7 @@ namespace Anthology.Models
         /// </summary>
         [JsonPropertyName("Effects")]  // [JsonConverter(typeof(EffectsConverter))]
 		public EffectContainer Effects {get; set;} = new();
+
+		public LocationNode selectedLocation = null;
     }
 }

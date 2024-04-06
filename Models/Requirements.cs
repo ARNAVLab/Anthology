@@ -82,19 +82,22 @@ namespace Anthology.Models
         /// Set of string tags that must be a subset of the location's tags for the action to occur.
         /// </summary>
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+		[JsonPropertyName("HasAllOf")]
         public List<string> HasAllOf { get; set; } = new();
 
         /// <summary>
         /// Set of string tags in which their must exist at least one match with the location's tags for the action to occur.
         /// </summary>
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-        public List<string> HasOneOrMoreOf { get; set; } = new();
+        [JsonPropertyName("HasOneOrMoreOf")]
+		public List<string> HasOneOrMoreOf { get; set; } = new();
 
         /// <summary>
         /// Set of string tags that must be a disjoint set of the location's tags for the action to occur.
         /// </summary>
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-        public List<string> HasNoneOf { get; set; } = new();
+        [JsonPropertyName("HasNoneOf")]
+		public List<string> HasNoneOf { get; set; } = new();
     }
 
     /// <summary>
@@ -116,12 +119,12 @@ namespace Anthology.Models
         /// <summary>
         /// The minimum number of people that must be present for the action to occur.
         /// </summary>
-        public short MinNumPeople { get; set; }
+        public short MinNumPeople { get; set; } = 0;
 
         /// <summary>
         /// The maximum number of people that may be present for the action to occur.
         /// </summary>
-        public short MaxNumPeople { get; set; }
+        public short MaxNumPeople { get; set; } = short.MaxValue;
 
         /// <summary>
         /// Set of agents that must be present for the action to be completed.
@@ -195,67 +198,67 @@ namespace Anthology.Models
         /// Location requirements in the container.
         /// </summary>
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        [JsonPropertyName("Location Requirements")]
-        public List<RLocation> Locations { get; set; }
+        [JsonPropertyName("LocationRequirements")]
+        public List<RLocation> Locations { get; set; } = null;
 
         /// <summary>
         /// People requirements in the container.
         /// </summary>
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        [JsonPropertyName("People Requirements")]
-        public List<RPeople> People { get; set; }
+        [JsonPropertyName("PeopleRequirements")]
+        public List<RPeople> People { get; set; } = null;
 
         /// <summary>
         /// Motive requirements in the container.
         /// </summary>
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        [JsonPropertyName("Motive Requirements")]
-        public List<RMotive> Motives { get; set; }
+        [JsonPropertyName("MotiveRequirements")]
+        public List<RMotive> Motives { get; set; } = null;
 
         /// <summary>
         /// Add an arbitrary requirement to the container.
         /// </summary>
         /// <param name="req">The requirement to add.</param>
-        public void AddRequirement(Requirement req)
-        {
-            if (req is RLocation rl)
-            {
-                Locations ??= new();
-                Locations.Add(rl);
-            }
-            else if (req is RPeople rp)
-            {
-                People ??= new();
-                People.Add(rp);
-            }
-            else if (req is RMotive rm)
-            {
-                Motives ??= new();
-                Motives.Add(rm);
-            }
-        }
+        // public void AddRequirement(Requirement req)
+        // {
+        //     if (req is RLocation rl)
+        //     {
+        //         Locations ??= new();
+        //         Locations.Add(rl);
+        //     }
+        //     else if (req is RPeople rp)
+        //     {
+        //         People ??= new();
+        //         People.Add(rp);
+        //     }
+        //     else if (req is RMotive rm)
+        //     {
+        //         Motives ??= new();
+        //         Motives.Add(rm);
+        //     }
+        // }
 
         /// <summary>
         /// Get a set of all requirements in the container.
         /// </summary>
         /// <returns>All of container's requirements as a set.</returns>
-        public IEnumerable<Requirement> GetAll()
-        {
-            List<Requirement> reqs = new();
-            if (Locations != null) reqs.AddRange(Locations);
-            if (People != null) reqs.AddRange(People);
-            if (Motives != null) reqs.AddRange(Motives);
-            return reqs;
-        }
+        // public IEnumerable<Requirement> GetAll()
+        // {
+        //     List<Requirement> reqs = new();
+        //     if (Locations != null) reqs.AddRange(Locations);
+        //     if (People != null) reqs.AddRange(People);
+        //     if (Motives != null) reqs.AddRange(Motives);
+        //     return reqs;
+        // }
 
-		public List<Requirement> GetRequirementsByType(string r_type)
-        {
-            List<Requirement> reqs = new();
+		// public List<Requirement> GetRequirementsByType(string r_type)
+        // {
+        //     List<Requirement> reqs = new();
       
-			if (r_type == Requirement.LOCATION && Locations != null)  reqs.AddRange(Locations);
-            else if (r_type == Requirement.PEOPLE && People != null) reqs.AddRange(People);
-			if (r_type == Requirement.MOTIVE && Motives != null) reqs.AddRange(Motives);
-            return reqs;
-        }
+		// 	if (r_type == Requirement.LOCATION && Locations != null)  reqs.AddRange(Locations);
+        //     else if (r_type == Requirement.PEOPLE && People != null) reqs.AddRange(People);
+		// 	if (r_type == Requirement.MOTIVE && Motives != null) reqs.AddRange(Motives);
+        //     return reqs;
+        // }
     }
 }

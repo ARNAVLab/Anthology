@@ -112,22 +112,6 @@ namespace Anthology.Models
         }
 
         /// <summary>
-        /// Creates and adds a location to each of the static data structures.
-        /// </summary>
-        /// <param name="name">Name of the location.</param>
-        /// <param name="x">X-coordinate of the location.</param>
-        /// <param name="y">Y-coordinate of the location.</param>
-        /// <param name="tags">Relevant tags of the location.</param>
-        /// <param name="connections">Connections from the location to others.</param>
-		/// 	Sasha delete?
- ///        // public static void AddLocation(string name, float x, float y, IEnumerable<string> tags, Dictionary<LocationNode, float> connections)
-        // {
-        //     List<string> newTags = new();
-        //     newTags.AddRange(tags);
-        //     AddLocation(new() { Name = name, X = x, Y = y, Tags = newTags, Connections = connections });
-        // }
-
-        /// <summary>
         /// Resets and populates the static distance matrix with all-pairs-shortest-path
         /// via the Floyd-Warshall algorithm.
         /// </summary>
@@ -140,7 +124,7 @@ namespace Anthology.Models
 				foreach (LocationNode loc2 in LocationsByName.Values)
 				{
 					if (loc1 == loc2) DistanceMatrix[loc1,loc2] = 0;
-					DistanceMatrix[loc1,loc2] = (float.MaxValue / 2f) - 1f;
+					DistanceMatrix[loc1,loc2] = float.MaxValue; // / 2f) - 1f;
 				}
 			}
 
@@ -152,6 +136,7 @@ namespace Anthology.Models
 
 					// Initializing the nextArray if there's an edge between the nodes 
 					NextInPath[loc1, loc2] = loc2;
+					NextInPath[loc2, loc1] = loc1;
                 }
             };
 
@@ -176,40 +161,18 @@ namespace Anthology.Models
         /// </summary>
         /// <param name="requirements">Requirements that locations must satisfy in order to be returned.</param>
         /// <returns>Returns all the locations that satisfied the given requirement, or an empty enumerable if none match.</returns>
-        public static List<LocationNode> LocationsSatisfyingLocationRequirement(RLocation requirements)
+        public static List<LocationNode> LocationsSatisfyingLocationRequirement(RLocation locationReq, IEnumerable<LocationNode> checkLocations = null)
         {
-			List<LocationNode> default_value;
-            List<LocationNode> matches = new();
-            if (requirements.HasOneOrMoreOf.Count() > 0)
-            {
-                foreach (string tag in requirements.HasOneOrMoreOf)
-                {
-					default_value = LocationsByTag.TryGetValue(tag, out var item) ? item : LocationsByTag[tag] = new();
-                    matches.AddRange(default_value);
-                }
-            }
-            else
-            {
-                matches.AddRange(LocationsByName.Values);
-            }
-            if (requirements.HasAllOf.Count() > 0)
-            {
-                foreach (string tag in requirements.HasAllOf)
-                {
-					default_value = LocationsByTag.TryGetValue(tag, out var item) ? item : LocationsByTag[tag] = new();
-                    matches.Intersect(default_value).ToList();
-                    // matches = matches.Intersect(LocationsByTag[tag]).ToList();
-                }
-            }
-            if (requirements.HasNoneOf.Count() > 0)
-            {
-                foreach (string tag in requirements.HasNoneOf)
-                {
-					default_value = LocationsByTag.TryGetValue(tag, out var item) ? item : LocationsByTag[tag] = new();
-                    matches = matches.Except(default_value).ToList();
-                }
-            }
-            return matches;
+			List<LocationNode> matches = new();
+
+			checkLocations ??= LocationsByName.Values;
+			
+			foreach (LocationNode location in checkLocations)
+			{
+				if(location.SatisfiesLocationRequirements(locationReq))
+					matches.Add(location);
+			}
+			return matches;
         }
 
         /// <summary>
@@ -221,25 +184,28 @@ namespace Anthology.Models
         /// <param name="requirements">Requirements that locations must satisfy to be returned.</param>
         /// <param name="agent">Agent relevant for handling agent requirement(s).</param>
         /// <returns>Returns all the locations that satisfied the given requirement, or an empty enumerable if none match.</returns>
-        public static List<LocationNode> LocationsSatisfyingPeopleRequirement(IEnumerable<LocationNode> locations, RPeople requirements, string agent_name = "")
+        public static List<LocationNode> LocationsSatisfyingPeopleRequirement(RPeople requirements, Agent agent, IEnumerable<LocationNode> checkLocations)
         {
+			List<LocationNode> matches = new();
+			checkLocations ??= LocationsByName.Values;
+
 			bool IsLocationValid(LocationNode location){
-                if (agent_name == "" || location.AgentsPresent.Contains(agent_name)) {
-                    return location.SatisfiesRequirements(requirements);
+                if (location.AgentsPresent.Contains(agent.Name)) {
+                    return location.SatisfiesPeopleRequirements(requirements, agent);
                 }
                 else {
 					// making sure the People requirements take the agent into account for the test
-                    location.AgentsPresent.Add(agent_name);
-                    bool valid = location.SatisfiesRequirements(requirements);
-                    location.AgentsPresent.Remove(agent_name);
+                    location.AgentsPresent.Add(agent.Name);
+                    bool valid = location.SatisfiesPeopleRequirements(requirements, agent);
+                    location.AgentsPresent.Remove(agent.Name);
                     return valid;
                 }
             }
 
-            List<LocationNode> matches = new();
-            foreach (LocationNode location in locations)
+            foreach (LocationNode location in checkLocations)
             {
-                if (IsLocationValid(location)) matches.Add(location);
+                if (IsLocationValid(location)) 
+					matches.Add(location);
             }
 
             return matches;
@@ -270,22 +236,49 @@ namespace Anthology.Models
             return nearest;
         }
 
+		/// <summary>
+		/// Connect any given location to it's neighboring locations
+		/// Adds an edge between the locations
+		/// </summary>
+		/// <param name="location">Location to be connected to neighbors</param>
+		internal static void ConnectToNeighbors(LocationNode location){
+			List<LocationNode> around = FindPOIsAroundLocation(location.X, location.Y);
+			foreach (LocationNode neighbor in around){
+				location.Connections[neighbor] = 1;
+				neighbor.Connections[location] = 1;
+			}
+		}
+		
+		/// <summary>
+		/// Creates connected edges in the graph between roads, and location nodes disconnected from roads in the graph
+		/// An edge between two points implies that the agent can travel between them
+		/// Currently we assume all neighboring distances are a single unit in distance. 
+		/// </summary>
 		internal static void UpdateConnections()
 		{
-			foreach (LocationNode road in LocationsByTag["Road"])
-			{
-				List<LocationNode> around = FindPOIsAroundLocation(road.X, road.Y);
-				foreach (LocationNode location in around)
-				{
-					road.Connections[location] = 1;
-					location.Connections[road] = 1;
+			foreach (LocationNode road in LocationsByTag["Road"]){
+				ConnectToNeighbors(road);
+			}
+
+			// Assumption: If there are any locations that are not near roads, connect them to nearby locations
+			// Kind of the equivalent of traipsing through neighboring buildings and backyards till you reach a road
+			foreach (LocationNode location in LocationsByName.Values){
+				if (!location.Connections.Any()){
+					ConnectToNeighbors(location);
 				}
 			}
 		}
 
-		internal static List<LocationNode> FindPathsBetween(LocationNode startLoc, LocationNode endLoc){
+		/// <summary>
+		/// Finds the path between any two locations on the map 
+		/// Uses a lazy approach, once a path has been calculated it's saved so that it's not calculated again.
+		/// </summary>
+		/// <param name="startLoc">Start Location</param>
+		/// <param name="endLoc">End Locatino</param>
+		/// <returns></returns>
+		internal static List<string> FindPathsBetween(LocationNode startLoc, LocationNode endLoc){
 			if(DiscoveredPaths.ContainsKey(startLoc, endLoc)){
-				return DiscoveredPaths[startLoc, endLoc];
+				return DiscoveredPaths[startLoc, endLoc].Select(loc => loc.Name).ToList();
 			}
 			else {
 				if(!NextInPath.ContainsKey(startLoc,endLoc)) {
@@ -309,11 +302,18 @@ namespace Anthology.Models
 					// assumption: path is bidirectional (for simplicity) - storing path 
 					DiscoveredPaths[endLoc, startLoc] = _oppPath; 
 
-					return path;
+					return path.Select(loc => loc.Name).ToList();
 				}
 			}
 		}
 
+		/// <summary>
+		/// Finds the valid points on the location map around a given x,y coordinate
+		/// Valid points are defined as those the agent can traverse to in using the cardinal (N,S,E,W) directions
+		/// </summary>
+		/// <param name="x">X Coordinate</param>
+		/// <param name="y">Y Coordinate</param>
+		/// <returns>List of valid locations around the point</returns>
 		private static List<LocationNode> FindPOIsAroundLocation(float x, float y)
 		{
 			List<LocationNode> around = new();
