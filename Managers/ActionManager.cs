@@ -27,7 +27,22 @@ namespace Anthology.Models
         {
 			Actions.Clear();
             World.ReadWrite.LoadActionsFromFile(path);
+			InitDefaultActions();
         }
+
+		public static void InitDefaultActions(){
+			Action wait_action = new Action();
+			wait_action.Name = "wait_action"; 
+			wait_action.MinTime = 0;
+			wait_action.Hidden = true; 
+			Actions.Add(wait_action.Name, wait_action);
+
+			Action travel = new Action();
+			travel.Name = "travel_action"; 
+			travel.MinTime = 0;
+			travel.Hidden = true; 
+			Actions.Add(travel.Name, travel);
+		}
 
         /// <summary>
         /// Clears all actions from the system.
@@ -76,13 +91,12 @@ namespace Anthology.Models
 			// agent.CurrentAction.Clear();
 			agent.CurrentAction.AddFirst(interruptingAction);
 
-			// if (location != null && location != agent.CurrentLocation){
-			// 	StartTravelToLocation(agent, location);
-			// }
-			// else 
-			// if (location == null || location == agent.CurrentLocation){
-			agent.OccupiedCounter = interruptingAction.MinTime;
-			// }
+			if (location != null && location != agent.CurrentLocation){
+				StartTravelToLocation(agent, location);
+			}
+			else if (location == null || location == agent.CurrentLocation){
+				agent.OccupiedCounter = interruptingAction.MinTime;
+			}
 
 			// Future: Add a check to see whether the other agent wants to perform the action/can perform it 
 			// For instance, if you're eating with a friend, make sure the other agent thinks of you as a friend.
@@ -236,10 +250,6 @@ namespace Anthology.Models
                 if (action.Hidden==true || action.Name==agent._lastAction) 
 					continue;
 
-				// if (agent.Name == "Thomas") UnityEngine.Debug.LogFormat("{0}: Looking at {1}", agent.Name, action.Name);
-                
-				// actionSelectLog.Add("Action: " + action.Name);
-
                 float travelTime;
                 List<LocationNode> possibleLocations = new();
                 List<RMotive> rMotives = action.Requirements.Motives;
@@ -280,9 +290,10 @@ namespace Anthology.Models
                 }
             }
 
+			
 			float selectedUtil = UnityEngine.Random.Range(0.0f, last);
-			Tuple<float, Action, LocationNode> selectedAction = possibleActions[0];
-			while (possibleActions.Any() && selectedAction.Item1 <= selectedUtil){
+			Tuple<float, Action, LocationNode> selectedAction = null;
+			while (possibleActions.Any() && (selectedAction == null || selectedAction.Item1 <= selectedUtil)){
 				selectedAction = possibleActions[0];
 				possibleActions.RemoveAt(0);
 			}

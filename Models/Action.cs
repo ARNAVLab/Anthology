@@ -49,4 +49,43 @@ namespace Anthology.Models
 
 		public LocationNode selectedLocation = null;
     }
+
+	public class ScheduledAction
+	{
+		private Action _action {get; set;} = null;
+		public string Action {
+			get => _action.Name; 
+			set {
+				_action = ActionManager.GetActionByName(value);
+			}
+		}
+
+		private List<Agent> _agents {get; set;} = new();
+
+		public List<string> Agents {
+			get => _agents.Select(person => person.Name).ToList(); 
+			set {
+				foreach (string name in value){
+					_agents.Add(AgentManager.GetAgentByName(name));
+				}
+			}
+		}
+
+		public int AtTime {get; set;} = int.MinValue;
+
+		private LocationNode _atLocation {get; set;} = null;
+		
+		public string AtLocation {
+			get => _atLocation.Name;
+			set {
+				_atLocation = LocationManager.LocationsByName[value];
+			}
+		}
+
+		public void ExecuteScheduledAction(){
+			foreach (Agent agent in _agents){
+				
+			}
+		}
+	}
 }
