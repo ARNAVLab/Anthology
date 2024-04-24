@@ -97,12 +97,12 @@ namespace Anthology.Models
 				foreach (string action in targetActions){
 					agent.CurrentAction.AddFirst(GetActionByName(action));
 				}
-				UnityEngine.Debug.LogFormat("Agent:{0} is interrupted from:{1} to:{2}", agent.Name, oldAct, agent.getCurrentAction().Name);
+				// UnityEngine.Debug.LogFormat("Agent:{0} is interrupted from:{1} to:{2}", agent.Name, oldAct, agent.getCurrentAction().Name);
 			}
 
 			else {
 				agent.CurrentAction.AddFirst(interruptingAction);
-				UnityEngine.Debug.LogFormat("Agent:{0} is interrupted from:{1} to:{2}", agent.Name, oldAct, agent.CurrentAction.First.Value.Name);
+				// UnityEngine.Debug.LogFormat("Agent:{0} is interrupted from:{1} to:{2}", agent.Name, oldAct, agent.CurrentAction.First.Value.Name);
 			}
 
 			// agent.OccupiedCounter = interruptingAction.MinTime;
@@ -240,6 +240,17 @@ namespace Anthology.Models
 			action.Effects.ApplyActionEffects(agent, partially);
 			agent.CurrentAction.RemoveFirst();
 			agent.OccupiedCounter = 0;
+
+			List<string> chainedActions = action.Effects.ChainActions; 
+			if (chainedActions != null && chainedActions.Any()){
+				chainedActions.Reverse(); 
+				foreach (string nextAct in chainedActions)
+				{
+					agent.CurrentAction.AddFirst(GetActionByName(nextAct));
+					UnityEngine.Debug.LogFormat("{0} is adding {1} to action queue.", agent.Name, nextAct);
+				}
+				StartAction(agent);
+			}
         }
 
 		public static void ChainAction(Agent agent, Action action, LocationNode location=null){
