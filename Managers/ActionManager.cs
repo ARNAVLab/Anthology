@@ -247,7 +247,7 @@ namespace Anthology.Models
 				foreach (string nextAct in chainedActions)
 				{
 					agent.CurrentAction.AddFirst(GetActionByName(nextAct));
-					UnityEngine.Debug.LogFormat("{0} is adding {1} to action queue.", agent.Name, nextAct);
+					// UnityEngine.Debug.LogFormat("{0} is adding {1} to action queue.", agent.Name, nextAct);
 				}
 				StartAction(agent);
 			}
