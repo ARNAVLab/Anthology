@@ -332,6 +332,33 @@ namespace Anthology.Models
 			} 
 			return around;
 		}
+
+		internal static LocationNode GetNearestLocationSatisfyingRequirements(Action action, Agent agent)
+		{
+			List<LocationNode> possibleLocations = new();
+			List<RLocation> rLocations = action.Requirements.Locations;
+			List<RPeople> rPeople = action.Requirements.People;
+			if (rLocations != null)
+			{
+				possibleLocations = LocationManager.LocationsSatisfyingLocationRequirement(rLocations[0]);
+			}
+			else
+			{
+				possibleLocations.AddRange(LocationManager.LocationsByName.Values);
+			}
+			
+			if (rPeople != null)
+			{
+				possibleLocations = LocationManager.LocationsSatisfyingPeopleRequirement(rPeople[0], agent, possibleLocations);
+			}
+
+			if(possibleLocations.Any()){
+				LocationNode nearestLocation = LocationManager.FindNearestLocationFrom(agent.CurrentLocation, possibleLocations);
+				return nearestLocation;
+			}
+
+			return null;
+		}
 	}
 
 	public class MKDictionary<TKey1,TKey2,TValue> :  Dictionary<Tuple<TKey1, TKey2>, TValue>, IDictionary<Tuple<TKey1, TKey2>, TValue> {

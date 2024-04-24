@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using MongoDB.Bson.Serialization.Serializers;
+using Unity.VisualScripting;
 using UnityEditor.Playables;
 
 namespace Anthology.Models
@@ -82,21 +83,30 @@ namespace Anthology.Models
         /// Potential future implementation: Optionally add the interrupted action (with the remaining occupied counter) to the end of the action queue.
         /// </summary>
         /// <param name="agent">The agent to interrupt.</param>
-        public static void InterruptAgent(Agent agent, Action interruptingAction, LocationNode location=null)
+        public static void InterruptAgent(Agent agent, Action interruptingAction)
         {
 			if (agent.CurrentAction.First.Value.Name == interruptingAction.Name) return; 
 
-			UnityEngine.Debug.LogFormat("Agent:{0} is interrupted from:{1} for:{2}", agent.Name, agent.CurrentAction.First.Value.Name, interruptingAction.Name);
+			string oldAct = agent.CurrentAction.First.Value.Name;
             ExecuteAction(agent); 
-			// agent.CurrentAction.Clear();
-			agent.CurrentAction.AddFirst(interruptingAction);
+			
+			List<string> targetActions = interruptingAction.Effects.TargetActions;
+			targetActions.Reverse();
 
-			if (location != null && location != agent.CurrentLocation){
-				StartTravelToLocation(agent, location);
+			if(targetActions.Any()){
+				foreach (string action in targetActions){
+					agent.CurrentAction.AddFirst(GetActionByName(action));
+				}
+				UnityEngine.Debug.LogFormat("Agent:{0} is interrupted from:{1} to:{2}", agent.Name, oldAct, agent.getCurrentAction().Name);
 			}
-			else if (location == null || location == agent.CurrentLocation){
-				agent.OccupiedCounter = interruptingAction.MinTime;
+
+			else {
+				agent.CurrentAction.AddFirst(interruptingAction);
+				UnityEngine.Debug.LogFormat("Agent:{0} is interrupted from:{1} to:{2}", agent.Name, oldAct, agent.CurrentAction.First.Value.Name);
 			}
+
+			// agent.OccupiedCounter = interruptingAction.MinTime;
+			StartAction(agent);
 
 			// Future: Add a check to see whether the other agent wants to perform the action/can perform it 
 			// For instance, if you're eating with a friend, make sure the other agent thinks of you as a friend.
@@ -120,6 +130,12 @@ namespace Anthology.Models
             Action action = agent.getCurrentAction(); // agent.CurrentAction.First.Value;
 			if(action == null) return; 
 
+			// If this action was performed on the agent, there's no choice. Just start it. 
+			if(action.Hidden == true){
+				agent.OccupiedCounter = action.MinTime;
+				return;
+			}
+
 			List<RPeople> rPeople = action.Requirements.People;
 			List<RLocation> rLocations = action.Requirements.Locations; 
 
@@ -129,6 +145,11 @@ namespace Anthology.Models
 			}
 
 			if(rLocations != null && !agent.CurrentLocation.SatisfiesLocationRequirements(rLocations[0])){
+				LocationNode nearestLocation = LocationManager.GetNearestLocationSatisfyingRequirements(action, agent);
+				if(nearestLocation != null){
+					StartTravelToLocation(agent,nearestLocation);
+					return; 
+				}
 				StopAction(agent);
 				return;
 			}
@@ -152,12 +173,9 @@ namespace Anthology.Models
 					return;
 				}
 				else {
-					UnityEngine.Debug.LogFormat("{0}: is attempting to socialize with action:{1} with other:{2} agents at:{3}", agent.Name, action.Name, targets.Count, agent.CurrentLocation);
-
 					// found people to perform the social action to/with
 					foreach(Agent target in targets){
-						UnityEngine.Debug.LogFormat("{0} and {2} - {1}", agent.Name, action.Name, target.Name);
-						InterruptAgent(target, action, agent.CurrentLocation);
+						InterruptAgent(target, action);
 					}
 					agent.OccupiedCounter = action.MinTime;
 					return;
@@ -232,7 +250,6 @@ namespace Anthology.Models
 			}
 			else if (location == null || location == agent.CurrentLocation){
 				StartAction(agent);
-				// agent.OccupiedCounter = action.MinTime;
 			}
 		}
 
@@ -251,33 +268,17 @@ namespace Anthology.Models
 					continue;
 
                 float travelTime;
-                List<LocationNode> possibleLocations = new();
                 List<RMotive> rMotives = action.Requirements.Motives;
-                List<RLocation> rLocations = action.Requirements.Locations;
-                List<RPeople> rPeople = action.Requirements.People;
+                
 
                 if (rMotives != null && !AgentManager.AgentSatisfiesMotiveRequirement(agent, rMotives)){
 					continue;
 				}
                 
-                if (rLocations != null)
+				// tests locations against people/location requirements
+				LocationNode nearestLocation = LocationManager.GetNearestLocationSatisfyingRequirements(action, agent);
+                if (nearestLocation != null)
                 {
-                    possibleLocations = LocationManager.LocationsSatisfyingLocationRequirement(rLocations[0]);
-                }
-                else
-                {
-                    possibleLocations.AddRange(LocationManager.LocationsByName.Values);
-                }
-                
-				if (rPeople != null)
-                {
-                    possibleLocations = LocationManager.LocationsSatisfyingPeopleRequirement(rPeople[0], agent, possibleLocations);
-                }
-
-                if (possibleLocations.Any())
-                {
-                    LocationNode nearestLocation = LocationManager.FindNearestLocationFrom(agent.CurrentLocation, possibleLocations);
-
                     travelTime = LocationManager.DistanceMatrix[agent.CurrentLocation, nearestLocation];
                     float deltaUtility = action.Effects.GetEffectDeltaForEffects(agent); //ActionManager.GetEffectDeltaForAgentAction(agent, action);
                     float denom = action.MinTime + travelTime;
