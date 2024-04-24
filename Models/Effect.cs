@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Text.Json.Serialization;
+using MongoDB.Driver;
 
 namespace Anthology.Models
 {
@@ -96,7 +98,21 @@ namespace Anthology.Models
 		[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)][JsonPropertyName("RelationshipEffects")]
 		public List<RelationshipEffect> Relationships {get; set;} = new();
 
+		/// <summary>
+		/// List of actions that will be performed next by this agent
+		/// Eg. Be Slapped Action may have as an effect that the following actions be added to the agent's queue: ['Cry', 'Go Home Sad']
+		/// </summary> <summary>
+		[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)][JsonPropertyName("ChainActions")]
+		public List<string> ChainActions {get; set;} = new();
 		
+		
+		/// <summary>
+		/// List of actions that will be performed on targetted agents
+		/// Eg. Slap Action may have TargetActions: ['Be Slapped', 'Cry']
+		/// </summary> <summary>
+		[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)][JsonPropertyName("TargetActions")]
+		public List<string> TargetActions {get; set;} = new();
+
 		/// <summary>
         /// Returns the net effect for an action for a specific agent.
         /// Takes into account the agent's current motivation statuses.
@@ -123,10 +139,10 @@ namespace Anthology.Models
 				if(motiveEffect.MotiveType != "")
 					agent.Motives[motiveEffect.MotiveType] = (float)agent.Motives[motiveEffect.MotiveType] + (motiveEffect.Delta*partially);
 			}
-			
-			foreach (RelationshipEffect relEffect in Relationships) {
-				throw new NotImplementedException();
-			}
+
+			// foreach (RelationshipEffect relEffect in Relationships) {
+			// 	throw new NotImplementedException();
+			// }
 		}
 	}
 
