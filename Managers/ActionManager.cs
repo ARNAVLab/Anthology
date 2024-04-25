@@ -83,12 +83,14 @@ namespace Anthology.Models
         /// Potential future implementation: Optionally add the interrupted action (with the remaining occupied counter) to the end of the action queue.
         /// </summary>
         /// <param name="agent">The agent to interrupt.</param>
-        public static void InterruptAgent(Agent agent, Action interruptingAction)
+        public static void InterruptAgent(Agent agent, Action interruptingAction, Agent interruptingAgent)
         {
 			if (agent.CurrentAction.First.Value.Name == interruptingAction.Name) return; 
 
 			string oldAct = agent.CurrentAction.First.Value.Name;
             ExecuteAction(agent); 
+
+			agent.Targets.Add(interruptingAgent);
 			
 			List<string> targetActions = interruptingAction.Effects.TargetActions;
 			targetActions.Reverse();
@@ -99,7 +101,6 @@ namespace Anthology.Models
 				}
 				// UnityEngine.Debug.LogFormat("Agent:{0} is interrupted from:{1} to:{2}", agent.Name, oldAct, agent.getCurrentAction().Name);
 			}
-
 			else {
 				agent.CurrentAction.AddFirst(interruptingAction);
 				// UnityEngine.Debug.LogFormat("Agent:{0} is interrupted from:{1} to:{2}", agent.Name, oldAct, agent.CurrentAction.First.Value.Name);
@@ -175,9 +176,10 @@ namespace Anthology.Models
 				else {
 					// found people to perform the social action to/with
 					foreach(Agent target in targets){
-						InterruptAgent(target, action);
+						InterruptAgent(target, action, agent);
 					}
 					agent.OccupiedCounter = action.MinTime;
+					agent.Targets = targets;
 					return;
 				}
         	}

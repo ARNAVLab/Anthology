@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text.Json.Serialization;
 using MongoDB.Driver;
+using UnityEngine.InputSystem.Controls;
 
 namespace Anthology.Models
 {
@@ -63,11 +64,11 @@ namespace Anthology.Models
         /// </summary>
         public override string On => "Relationship";
 
-		[JsonPropertyName("RelationshipType")]
+		[JsonPropertyName("RelType")]
 		public string RelType {get; set;} = string.Empty;
 
 		[JsonPropertyName("Delta")]
-		public float ValenceDelta {get; set;} = 0;
+		public float Delta {get; set;} = 0;
 
 		public List<Agent> targets = new();
 
@@ -126,25 +127,42 @@ namespace Anthology.Models
 				deltaUtility += motiveEffect.GetEffectDeltaForEffect(agent);
 			}
 			
-			foreach (RelationshipEffect relEffect in Relationships) {
-				throw new NotImplementedException();
-			}
+			// foreach (RelationshipEffect relEffect in Relationships) {
+			// 	throw new NotImplementedException();
+			// }
 			
 			return deltaUtility;
 		}
 
 		public void ApplyActionEffects(Agent agent, int partially=1){	
-			// int _partially = (int)Math.Round(partially, 0);
+			if (agent.Targets.Any()) 
+				
+
 			foreach (MotiveEffect motiveEffect in Motives) {
 				if(motiveEffect.MotiveType != "")
 					agent.Motives[motiveEffect.MotiveType] = (float)agent.Motives[motiveEffect.MotiveType] + (motiveEffect.Delta*partially);
 			}
 
-			// foreach (RelationshipEffect relEffect in Relationships) {
-			// 	throw new NotImplementedException();
-			// }
+			foreach (RelationshipEffect relEffect in Relationships) {
+				foreach(Agent target in agent.Targets){
+					Relationship toEdit = agent.getRelationshipWithType(relEffect.RelType, target.Name); 
+
+					if(toEdit == null){
+						Relationship rel = new(); 
+						rel.With = target.Name;
+						rel.Type = relEffect.RelType; 
+						rel.Valence = relEffect.Delta * partially;
+						agent.Relationships.Add(rel);
+						
+					}
+					else{
+						toEdit.Valence += relEffect.Delta * partially;
+					}
+				}
+			}
+			// Reset targets
+			agent.Targets = new();
 		}
 	}
-
 	
 }
