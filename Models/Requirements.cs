@@ -141,6 +141,7 @@ namespace Anthology.Models
 
         /// <summary>
         /// Relationships that must exist between participating agents in order for the action to execute.
+		/// The participating agents must be at the same location 	
         /// eg. [teacher, student] relationships for the action "submit_homework".
         /// </summary>
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
@@ -148,10 +149,20 @@ namespace Anthology.Models
 
         /// <summary>
         /// Relationships that must not exist between participating agents in order for the action to execute.
+		/// The participating agents must be at the same location 	
         /// eg. [siblings] relationship for the action "kiss_romantically".
         /// </summary>
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public List<string> RelationshipsAbsent { get; set; } = new();
+
+
+		/// <summary>
+        /// Relationships that must not exist between participating agents in order for the action to execute.
+		/// The participating agents do not have to be at the same location
+        /// eg. Text a friend if they're at a different location
+        /// </summary>
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public List<string> HasRelationships { get; set; } = new();
     }
 
     /// <summary>

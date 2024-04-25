@@ -88,9 +88,16 @@ namespace Anthology.Models
                    SpecificPeoplePresent(peopleReq.SpecificPeoplePresent) &&
                    SpecificPeopleAbsent(peopleReq.SpecificPeopleAbsent) &&
                    RelationshipsPresent(peopleReq.RelationshipsPresent, agent) &&
-				   RelationshipsAbsent(peopleReq.RelationshipsAbsent, agent);
+				   RelationshipsAbsent(peopleReq.RelationshipsAbsent, agent) && 
+				   HasRelationships(peopleReq.HasRelationships, agent);
 			return test; 
         }
+
+		private bool HasRelationships(List<string> hasRelationships, Agent agent)
+		{
+			if(agent.Relationships.Any(rel => hasRelationships.Contains(rel.Type))) return true; 
+			return false; 
+		}
 
 		public List<Agent> FindTargetsForAction(RPeople peopleReq, Agent agent){
 			HashSet<string> targets = new(); 
@@ -118,10 +125,14 @@ namespace Anthology.Models
 				if (peopleReq.RelationshipsPresent.Contains(rel.Type) && AgentsPresent.Contains(rel.With)){
 					targets.Add(rel.With);
 				}
-				if (peopleReq.RelationshipsAbsent.Contains(rel.Type) && targets.Contains(rel.With)){
+				if (peopleReq.HasRelationships.Contains(rel.Type)){
+					targets.Add(rel.With);
+				}
+				if (peopleReq.RelationshipsAbsent.Contains(rel.Type) && AgentsPresent.Contains(rel.With)){
 					targets.Remove(rel.With);
 				}
 			}
+			
 
 			targets.Remove(agent.Name);
 
