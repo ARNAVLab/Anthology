@@ -332,24 +332,32 @@ namespace Anthology.Models
 			} 
 			return around;
 		}
-	}
 
-	public class MKDictionary<TKey1,TKey2,TValue> :  Dictionary<Tuple<TKey1, TKey2>, TValue>, IDictionary<Tuple<TKey1, TKey2>, TValue> {
-		public TValue this[TKey1 key1, TKey2 key2] {
-			get { return base[Tuple.Create(key1, key2)]; }
+		internal static LocationNode GetNearestLocationSatisfyingRequirements(Action action, Agent agent)
+		{
+			List<LocationNode> possibleLocations = new();
+			List<RLocation> rLocations = action.Requirements.Locations;
+			List<RPeople> rPeople = action.Requirements.People;
+			if (rLocations != null)
+			{
+				possibleLocations = LocationManager.LocationsSatisfyingLocationRequirement(rLocations[0]);
+			}
+			else
+			{
+				possibleLocations.AddRange(LocationManager.LocationsByName.Values);
+			}
 			
-			set { base[Tuple.Create(key1, key2)] = value; }
-		}
+			if (rPeople != null)
+			{
+				possibleLocations = LocationManager.LocationsSatisfyingPeopleRequirement(rPeople[0], agent, possibleLocations);
+			}
 
-		public void Add(TKey1 key1, TKey2 key2, TValue value)
-		{
-			base.Add(Tuple.Create(key1, key2), value);
-		}
+			if(possibleLocations.Any()){
+				LocationNode nearestLocation = LocationManager.FindNearestLocationFrom(agent.CurrentLocation, possibleLocations);
+				return nearestLocation;
+			}
 
-		public bool ContainsKey(TKey1 key1, TKey2 key2)
-		{
-			return base.ContainsKey(Tuple.Create(key1, key2));
+			return null;
 		}
 	}
-
 }

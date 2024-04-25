@@ -51,6 +51,7 @@ namespace Anthology.Models
         {
 			string actionsText = File.ReadAllText(path);
 			List<Action> sActions = JsonSerializer.Deserialize<List<Action>>(actionsText, Jso);
+
 			foreach (Action deserialized_action in sActions)
             {
                 ActionManager.Actions[deserialized_action.Name] = deserialized_action;

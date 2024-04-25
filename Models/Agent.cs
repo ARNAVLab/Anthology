@@ -35,6 +35,7 @@ namespace Anthology.Models
 		/// 	The property ensures we record the movement and update the GUI accordingly.
         /// </summary>
 		private LocationNode _currentLocation = LocationManager.GetRandomLocation();
+		internal List<Agent> Targets = new();
 
 		[JsonPropertyName("AtLocation")]
 		public string AtLocation {
@@ -92,5 +93,21 @@ namespace Anthology.Models
 			else
 				return null;
 		}
+
+		public Relationship getRelationshipWithType(string rel_type, string with){
+			foreach(Relationship relationship in Relationships){
+				if(relationship.isRelationshipTypeWith(rel_type, with)) return relationship; 
+			}
+			return null;
+		}
+
+		/// <summary>
+		/// Returns this location as a string object for debugging and printing
+		/// </summary>
+		/// <returns>Name of the agent</returns>
+		public override string ToString() {
+			return string.Format("Agent:{0}", Name);
+		}
+
     }
 }
