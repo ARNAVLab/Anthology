@@ -34,6 +34,11 @@ namespace Anthology.Models
         /// </summary>
         public static Dictionary<string, List<LocationNode>> LocationsByTag { get; set; } = new();
 
+		/// <summary>
+		/// Stores a list of all locations that are editted so that the SimManager can be updated
+		/// </summary> 
+		public static HashSet<string> dirtyLocations { get; set; } = new();
+
         /// <summary>
         /// The total number of locations in the simulation.
         /// </summary>

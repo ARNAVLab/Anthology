@@ -22,6 +22,8 @@ namespace Anthology.Models
         public abstract string On { get; }
 
 		public abstract float GetEffectDeltaForEffect(Agent agent);
+
+		public abstract void ApplyActionEffects(Agent agent, int partially=1);
     }
 
 	public class MotiveEffect: Effect {
@@ -38,21 +40,68 @@ namespace Anthology.Models
 		/// then motive = MotiveEnum.SOCIAL.
 		/// </summary>
 		[JsonPropertyName("MotiveType")]
-		public string MotiveType { get; set; } = string.Empty;
+		public string MotiveType { get; set; }
 
         /// <summary>
         /// Valence of effect on the motive.
         /// </summary>
         [JsonPropertyName("Delta")]
-		public float Delta { get; set; } = 0;
+		public float Delta { get; set; }
+
+		public override void ApplyActionEffects(Agent agent, int partially = 1) {
+			agent.Motives[MotiveType] = agent.Motives[MotiveType] + (Delta*partially);	
+		}
 
 		public override float GetEffectDeltaForEffect(Agent agent)
 		{	
-			if (MotiveType == "")
-				return 0; 
-			
+			// if (MotiveType == "")
+			// 	return 0; 
 			float current = (float)agent.Motives[MotiveType];
 			return Math.Clamp(Delta + current, Motive.MIN, Motive.MAX) - current;
+		}
+	}
+
+	public class LocationEffect: Effect {
+		/// <summary>
+		/// Describes th emotive affected by this effected,
+		/// eg. if an action affects the social motive of an agent,
+		/// </summary>
+		public override string On => "Location";
+
+		/// <summary>
+		/// Describes the location affected by this Effect.
+		/// eg. if an action affects the tags of a location,
+		/// </summary>
+		// [JsonPropertyName("Location")]
+		// public string Location { get; set; } = string.Empty;
+
+		/// <summary>
+		/// Describes the effect on the location.
+		/// eg. Add, Remove tags
+		/// </summary>
+		[JsonPropertyName("Operation")]
+		public string Operation { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Valence of effect on the motive.
+        /// </summary>
+        [JsonPropertyName("Tags")]
+		public List<string> Tags { get; set; } = new();
+
+		public override void ApplyActionEffects(Agent agent, int partially = 1)
+		{
+			if(Operation == "Add"){
+				agent.CurrentLocation.AddTags(Tags);
+			}
+
+			else if(Operation == "Remove"){
+				agent.CurrentLocation.RemoveTags(Tags);
+			}
+		}
+
+		public override float GetEffectDeltaForEffect(Agent agent)
+		{	
+			throw new NotImplementedException();
 		}
 	}
 
@@ -75,11 +124,28 @@ namespace Anthology.Models
 		public override float GetEffectDeltaForEffect(Agent agent)
 		{
 			throw new NotImplementedException();
-			// if (RelationshipType == "")
-			// 	return 0; 
-			
-			// float current = (float)agent.Motives[RelationshipType];
-			// return Math.Clamp(ValenceDelta + current, Motive.MIN, Motive.MAX) - current;
+		}
+
+		public override void ApplyActionEffects(Agent agent, int partially = 1)
+		{
+			foreach(Agent target in agent.Targets){
+				Relationship toEdit = agent.getRelationshipWithType(RelType, target.Name); 
+
+				if(toEdit == null){
+					Relationship rel = new(); 
+					rel.With = target.Name;
+					rel.Type = RelType; 
+					rel.Valence = Delta * partially;
+					agent.Relationships.Add(rel);
+					
+				}
+				else{
+					toEdit.Valence += Delta * partially;
+				}
+			}
+
+			// Reset targets
+			agent.Targets = new();
 		}
 	}
 
@@ -89,8 +155,8 @@ namespace Anthology.Models
 		/// List of all the effects on the agents motive executing this action will have
 		/// </summary> <summary>
 		
-		[JsonPropertyName("MotiveEffects")]
-		[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+		
+		[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)][JsonPropertyName("MotiveEffects")]
 		public List<MotiveEffect> Motives {get; set;} = new();
 		
 		/// <summary>
@@ -98,6 +164,13 @@ namespace Anthology.Models
 		/// </summary> <summary>
 		[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)][JsonPropertyName("RelationshipEffects")]
 		public List<RelationshipEffect> Relationships {get; set;} = new();
+
+
+		/// <summary>
+		/// List of all the effects on the agents relationships executing this action will have
+		/// </summary> <summary>
+		[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)][JsonPropertyName("LocationEffects")]
+		public List<LocationEffect> Locations {get; set;} = new();
 
 		/// <summary>
 		/// List of actions that will be performed next by this agent
@@ -135,33 +208,20 @@ namespace Anthology.Models
 		}
 
 		public void ApplyActionEffects(Agent agent, int partially=1){	
-			if (agent.Targets.Any()) 
-				
-
+			
 			foreach (MotiveEffect motiveEffect in Motives) {
-				if(motiveEffect.MotiveType != "")
-					agent.Motives[motiveEffect.MotiveType] = (float)agent.Motives[motiveEffect.MotiveType] + (motiveEffect.Delta*partially);
+				motiveEffect.ApplyActionEffects(agent, partially);
 			}
 
-			foreach (RelationshipEffect relEffect in Relationships) {
-				foreach(Agent target in agent.Targets){
-					Relationship toEdit = agent.getRelationshipWithType(relEffect.RelType, target.Name); 
-
-					if(toEdit == null){
-						Relationship rel = new(); 
-						rel.With = target.Name;
-						rel.Type = relEffect.RelType; 
-						rel.Valence = relEffect.Delta * partially;
-						agent.Relationships.Add(rel);
-						
-					}
-					else{
-						toEdit.Valence += relEffect.Delta * partially;
-					}
+			if (agent.Targets.Any()) {
+				foreach (RelationshipEffect relEffect in Relationships) {
+					relEffect.ApplyActionEffects(agent, partially);
 				}
 			}
-			// Reset targets
-			agent.Targets = new();
+
+			foreach(LocationEffect locEffect in Locations) {
+				locEffect.ApplyActionEffects(agent, partially);
+			}	
 		}
 	}
 	

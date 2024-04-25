@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Linq;
 using System.Text.Json.Serialization;
+using SimManager.SimulationManager;
 
 namespace Anthology.Models
 {
@@ -285,6 +286,28 @@ namespace Anthology.Models
 		public void EnterLocation(Agent agent){
 			AgentsPresent.Add(agent.Name);
 		}
+
+		/// <summary>
+		/// Allow tags to be added to a location
+		/// </summary>
+		/// <param name="tag">tag to be added</param>
+		public void AddTags(List<string> tags){
+			Tags.AddRange(tags);
+			LocationManager.dirtyLocations.Add(Name);
+		}
+
+		/// <summary>
+		/// Allow tags to be removed to a location
+		/// </summary>
+		/// <param name="tag">tag to be added</param>
+		public void RemoveTags(List<string> tags){
+			foreach(string tag in tags){
+				Tags.Remove(tag);
+			}
+
+			LocationManager.dirtyLocations.Add(Name);
+		}
+
 
 		/// <summary>
 		/// When an agent exits a location, the agent's name is removed from the "Agents Present" list 

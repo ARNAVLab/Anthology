@@ -131,11 +131,11 @@ namespace Anthology.Models
             Action action = agent.getCurrentAction(); // agent.CurrentAction.First.Value;
 			if(action == null) return; 
 
-			// If this action was performed on the agent, there's no choice. Just start it. 
-			if(action.Hidden == true){
-				agent.OccupiedCounter = action.MinTime;
-				return;
-			}
+			// // If this action was performed on the agent, there's no choice. Just start it. 
+			// if(action.Hidden == true){
+			// 	agent.OccupiedCounter = action.MinTime;
+			// 	return;
+			// }
 
 			List<RPeople> rPeople = action.Requirements.People;
 			List<RLocation> rLocations = action.Requirements.Locations; 
@@ -147,6 +147,7 @@ namespace Anthology.Models
 
 			if(rLocations != null && !agent.CurrentLocation.SatisfiesLocationRequirements(rLocations[0])){
 				LocationNode nearestLocation = LocationManager.GetNearestLocationSatisfyingRequirements(action, agent);
+				
 				if(nearestLocation != null){
 					StartTravelToLocation(agent,nearestLocation);
 					return; 
